@@ -36,12 +36,12 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 
 * Add `flink-siddhi` in maven dependency:
 
-		<dependencies>
-        		<dependency>
-        	        <groupId>com.github.haoch</groupId>
-        	        <artifactId>flink-siddhi</artifactId>
-        	        <version>1.2-SNAPSHOT</version>
-        	    </dependency>
+	<dependencies>
+		<dependency>
+	        <groupId>com.github.haoch</groupId>
+	        <artifactId>flink-siddhi</artifactId>
+	        <version>1.2-SNAPSHOT</version>
+	    </dependency>
         </dependencies>
             
         <repositories>
