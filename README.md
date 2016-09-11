@@ -36,41 +36,41 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 
 * Add `flink-siddhi` in maven dependency:
 
-	<dependencies>
-		<dependency>
-	        <groupId>com.github.haoch</groupId>
-	        <artifactId>flink-siddhi</artifactId>
-	        <version>1.2-SNAPSHOT</version>
-	    </dependency>
+        <dependencies>
+                <dependency>
+                        <groupId>com.github.haoch</groupId>
+                        <artifactId>flink-siddhi</artifactId>
+                        <version>1.2-SNAPSHOT</version>
+                </dependency>
         </dependencies>
-            
+        
         <repositories>
-            <repository>
-                <id>clojars</id>
-                <url>http://clojars.org/repo/</url>
-            </repository>
+                <repository>
+                        <id>clojars</id>
+                        <url>http://clojars.org/repo/</url>
+                </repository>
         </repositories>
  
 * Execute [`SiddhiQL`](https://docs.wso2.com/display/CEP300/Introduction+to+Siddhi+Query+Language) with `SiddhiCEP` API, for example:
 
-	     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-	     SiddhiCEP cep = SiddhiCEP.getSiddhiEnvironment(env);
-	    
-	     cep.registerExtension("custom:plus",CustomPlusFunctionExtension.class);
-	    
-	     cep.registerStream("inputStream1", input1, "id", "name", "price","timestamp");
-	     cep.registerStream("inputStream2", input2, "id", "name", "price","timestamp");
-	    
-	     DataStream<Tuple5<Integer,String,Integer,String,Double>> output = cep
-	     	.from("inputStream1").union("inputStream2")
-	     	.sql( 
-	     	"from every s1 = inputStream1[id == 2] "
-    		 + " -> s2 = inputStream2[id == 3] "
-    		 + "select s1.id as id_1, s1.name as name_1, s2.id as id_2, s2.name as name_2 , custom:plus(s1.price,s2.price) as price"
-    		 + "insert into outputStream")
-	    	.returns("outputStream");
-	    
-	     env.execute();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        SiddhiCEP cep = SiddhiCEP.getSiddhiEnvironment(env);
+        
+        cep.registerExtension("custom:plus",CustomPlusFunctionExtension.class);
+        
+        cep.registerStream("inputStream1", input1, "id", "name", "price","timestamp");
+        cep.registerStream("inputStream2", input2, "id", "name", "price","timestamp");
+        
+        DataStream<Tuple5<Integer,String,Integer,String,Double>> output = cep
+             .from("inputStream1").union("inputStream2")
+             .sql( 
+             "from every s1 = inputStream1[id == 2] "
+             + " -> s2 = inputStream2[id == 3] "
+             + "select s1.id as id_1, s1.name as name_1, s2.id as id_2, s2.name as name_2 , custom:plus(s1.price,s2.price) as price"
+             + "insert into outputStream")
+            .returns("outputStream");
+        
+        env.execute();
      
   > For more examples, please see [`org.apache.flink.contrib.siddhi.SiddhiCEPITCase`](https://github.com/haoch/flink-siddhi/blob/master/src/test/java/org/apache/flink/contrib/siddhi/SiddhiCEPITCase.java)
   
