@@ -2,7 +2,7 @@
 flink-siddhi
 ============
 
-> A light-weight library to run Siddhi CEP within flink streaming application.
+> A light-weight library to run [Siddhi CEP](https://github.com/wso2/siddhi) within [Apache Flink](https://github.com/apache/flink) streaming application.
 
 __Version:`1.2-SNAPSHOT`__
 
