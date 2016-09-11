@@ -16,6 +16,19 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * Java (Version: `1.8`)
 * Apache Maven
 
+## Development
+
+## Clone
+	git clone git@github.com:haoch/flink-siddhi.git
+
+### Building
+
+   	mvn clean install -DskipTests
+   
+### Testing
+
+   	mvn clean test
+
 ## Usage and API
 
 * Add `flink-siddhi` in maven dependency:
@@ -26,7 +39,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 			<version>1.2-SNAPSHOT</version>
 		</dependency>
  
-* Start using API from `SiddhiCEP`, for example:
+* Execute [`SiddhiQL`](https://docs.wso2.com/display/CEP300/Introduction+to+Siddhi+Query+Language) with `SiddhiCEP` API, for example:
 
 	     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 	     SiddhiCEP cep = SiddhiCEP.getSiddhiEnvironment(env);
@@ -70,18 +83,11 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * Integrate siddhi runtime state management with Flink state (See `AbstractSiddhiOperator`)
 * Support siddhi plugin management to extend CEP functions. (See `SiddhiCEP#registerExtension`)
 
-## Development
-
-## Clone
-	git clone git@github.com:haoch/flink-siddhi.git
-
-### Building
-
-   	mvn clean install -DskipTests
-   
-### Testing
-
-   	mvn clean test
+## Documentations
+* Site: https://haoch.github.io/flink-siddhi/
+* Wiki: https://github.com/haoch/flink-siddhi/wiki
+* Siddhi Query Language: https://docs.wso2.com/display/CEP300/Introduction+to+Siddhi+Query+Language
+* Apache Flink: http://flink.apache.org/
 
 ## Support and Contact
 * Issues: https://github.com/haoch/flink-siddhi/issues
