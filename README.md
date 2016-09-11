@@ -36,7 +36,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 
 		<dependency>
 			<groupId>com.github.haoch</groupId>
-			<artifactId>flink-siddhi</artifactId>
+			<artifactId>flink-siddhi_2.10</artifactId>
 			<version>1.2-SNAPSHOT</version>
 		</dependency>
  
