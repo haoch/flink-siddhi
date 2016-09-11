@@ -18,16 +18,24 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
     
 ## How to Use
 
-* Add `flink-siddhi` in maven dependency:
-
-	<dependency>
-        <groupId>com.github.haoch</groupId>
-        <artifactId>flink-siddhi</artifactId>
-        <version>1.2-SNAPSHOT</version>
-    </dependency>
+* Add `flink-siddhi` into project dependencies
+   
+	<dependencies>
+		<dependency>
+	        <groupId>com.github.haoch</groupId>
+	        <artifactId>flink-siddhi</artifactId>
+	        <version>1.2-SNAPSHOT</version>
+	    </dependency>
+	</dependencies>
     
+    <repositories>
+	    <repository>
+	        <id>clojars</id>
+	        <url>http://clojars.org/repo/</url>
+	    </repository>
+    </repositories>
  
-* Start using API from `SiddhiCEP`, for example:
+* Execute SiddhiQL on DataStream with `SiddhiCEP` API, for example:
 
      StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
      SiddhiCEP cep = SiddhiCEP.getSiddhiEnvironment(env);
