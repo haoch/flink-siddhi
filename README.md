@@ -16,7 +16,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * Java (Version: `1.8`)
 * Apache Maven
 
-## Usage
+## Usage and API
 
 * Add `flink-siddhi` in maven dependency:
 
@@ -49,14 +49,6 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
      
   > For more examples, please see [`org.apache.flink.contrib.siddhi.SiddhiCEPITCase`](https://github.com/haoch/flink-siddhi/blob/master/src/test/java/org/apache/flink/contrib/siddhi/SiddhiCEPITCase.java)
   
-## Building
-
-   	mvn clean install -DskipTests
-   
-## Testing
-
-   	mvn clean test
-
 ## Features
 
 * Integrate Siddhi CEP as an stream operator (i.e. `TupleStreamSiddhiOperator`), supporting rich CEP features like
@@ -77,7 +69,20 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
   * Return output stream as DataStream with type intelligently inferred from Siddhi Stream Schema
 * Integrate siddhi runtime state management with Flink state (See `AbstractSiddhiOperator`)
 * Support siddhi plugin management to extend CEP functions. (See `SiddhiCEP#registerExtension`)
-     
+
+## Development
+
+## Clone
+	git clone git@github.com:haoch/flink-siddhi.git
+
+### Building
+
+   	mvn clean install -DskipTests
+   
+### Testing
+
+   	mvn clean test
+
 ## Support and Contact
 * Issues: https://github.com/haoch/flink-siddhi/issues
 * Documents: https://github.com/haoch/flink-siddhi/wiki
