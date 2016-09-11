@@ -31,59 +31,13 @@ under the License.
 	<groupId>com.github.haoch</groupId>
 	<artifactId>flink-siddhi_2.10</artifactId>
 	<name>flink-siddhi</name>
+	<version>1.2-SNAPSHOT</version>
 
 	<packaging>jar</packaging>
 
 	<properties>
 		<siddhi.version>3.0.5</siddhi.version>
 	</properties>
-	<repositories>
-		<repository>
-		  <id>central</id>
-		  <!-- This should be at top, it makes maven try the central repo first and then others and hence faster dep resolution -->
-		  <name>Maven Repository</name>
-		  <url>https://repo1.maven.org/maven2</url>
-		  <releases>
-		    <enabled>true</enabled>
-		  </releases>
-		  <snapshots>
-		    <enabled>false</enabled>
-		  </snapshots>
-		</repository>
-		<repository>
-		  <id>snapshot</id>
-		  <name>Maven Snapshot Repository</name>
-		  <url>https://repository.apache.org/snapshots</url>
-		  <releases>
-		    <enabled>true</enabled>
-		  </releases>
-		  <snapshots>
-		    <enabled>false</enabled>
-		  </snapshots>
-		</repository>
-		<repository>
-			<id>Wso2 Repository</id>
-			<url>http://maven.wso2.org/nexus/content/groups/wso2-public</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-		  <id>central</id>
-		  <url>https://repo1.maven.org/maven2</url>
-		  <releases>
-		    <enabled>true</enabled>
-		  </releases>
-		  <snapshots>
-		    <enabled>false</enabled>
-		  </snapshots>
-		</pluginRepository>
-	</pluginRepositories>
 
 	<dependencies>
 		<!-- core dependencies -->
@@ -130,4 +84,94 @@ under the License.
 			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>central</id>
+			<!-- This should be at top, it makes maven try the central repo first and then others and hence faster dep resolution -->
+			<name>Maven Repository</name>
+			<url>https://repo1.maven.org/maven2</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>snapshot</id>
+			<name>Maven Snapshot Repository</name>
+			<url>https://repository.apache.org/snapshots</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>Wso2 Repository</id>
+			<url>http://maven.wso2.org/nexus/content/groups/wso2-public</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>central</id>
+			<url>https://repo1.maven.org/maven2</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>2.8.1</version>
+					<configuration>
+						<skip>true</skip>
+					</configuration>
+					<executions>
+						<execution>
+							<phase>deploy</phase>
+							<configuration>
+								<packaging>jar</packaging>
+								<generatePom>true</generatePom>
+								<url>https://clojars.org/repo</url>
+								<repositoryId>clojars</repositoryId>
+								<artifactId>${project.artifactId}</artifactId>
+								<groupId>${project.groupId}</groupId>
+								<version>${project.version}</version>
+								<file>${project.build.directory}/${project.build.finalName}.jar</file>
+							</configuration>
+							<goals>
+								<goal>deploy-file</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<distributionManagement>
+		<!--Deploy to clojars repository by: mvn deploy -DskipTests -->
+		<repository>
+			<id>clojars</id>
+			<name>Clojars repository</name>
+			<url>https://clojars.org/repo</url>
+		</repository>
+	</distributionManagement>
 </project>

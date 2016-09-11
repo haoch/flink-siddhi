@@ -2,6 +2,9 @@
 flink-siddhi
 ============
 
+[![Clojars Project](https://img.shields.io/clojars/v/com.github.haoch/flink-siddhi_2.10.svg)](https://clojars.org/com.github.haoch/flink-siddhi_2.10)
+
+
 > A light-weight library to run siddhi cep within flink streaming application.
 
 __Version:`1.2-SNAPSHOT`__
@@ -22,6 +25,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
         <artifactId>flink-siddhi</artifactId>
         <version>1.2-SNAPSHOT</version>
     </dependency>
+    
  
 * Start using API from `SiddhiCEP`, for example:
 
