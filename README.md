@@ -1,4 +1,3 @@
-
 flink-siddhi
 ============
 
@@ -17,7 +16,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * Java (Version: `1.8`)
 * Apache Maven
 
-## How to Use
+## Usage
 
 * Add `flink-siddhi` in maven dependency:
 
@@ -39,27 +38,26 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 	    
 	     DataStream<Tuple5<Integer,String,Integer,String,Double>> output = cep
 	     	.from("inputStream1").union("inputStream2")
-	     	.sql(
-	    		"from every s1 = inputStream1[id == 2] "
-	    		 + " -> s2 = inputStream2[id == 3] "
-	    		 + "select s1.id as id_1, s1.name as name_1, s2.id as id_2, s2.name as name_2 , custom:plus(s1.price,s2.price) as price"
-	    		 + "insert into outputStream"
-	    	)
+	     	.sql( 
+	     	"from every s1 = inputStream1[id == 2] "
+    		 + " -> s2 = inputStream2[id == 3] "
+    		 + "select s1.id as id_1, s1.name as name_1, s2.id as id_2, s2.name as name_2 , custom:plus(s1.price,s2.price) as price"
+    		 + "insert into outputStream")
 	    	.returns("outputStream");
 	    
 	     env.execute();
      
-  > For more examples, please see `org.apache.flink.contrib.siddhi.SiddhiCEPITCase`
+  > For more examples, please see [`org.apache.flink.contrib.siddhi.SiddhiCEPITCase`](https://github.com/haoch/flink-siddhi/blob/master/src/test/java/org/apache/flink/contrib/siddhi/SiddhiCEPITCase.java)
   
-## How to Build
+## Building
 
    	mvn clean install -DskipTests
    
-## How to Test
+## Testing
 
    	mvn clean test
 
-## Main Features
+## Features
 
 * Integrate Siddhi CEP as an stream operator (i.e. `TupleStreamSiddhiOperator`), supporting rich CEP features like
   * Filter
@@ -73,23 +71,24 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
   * Sequence processing
   * Event Tables
   * ...
-  
 * Provide easy-to-use Siddhi CEP API to integrate Flink DataStream API (See `SiddhiCEP` and `SiddhiStream`)
   * Register Flink DataStream associating native type information with Siddhi Stream Schema, supporting POJO,Tuple, Primitive Type, etc.
   * Connect with single or multiple Flink DataStreams with Siddhi CEP Execution Plan
   * Return output stream as DataStream with type intelligently inferred from Siddhi Stream Schema
-  
 * Integrate siddhi runtime state management with Flink state (See `AbstractSiddhiOperator`)
-
 * Support siddhi plugin management to extend CEP functions. (See `SiddhiCEP#registerExtension`)
      
 ## Support and Contact
-* Report Issues: https://github.com/haoch/flink-siddhi/issues
-* Documentations: https://github.com/haoch/flink-siddhi/wiki
+* Issues: https://github.com/haoch/flink-siddhi/issues
+* Documents: https://github.com/haoch/flink-siddhi/wiki
 
 ## Author and Contributors
 
 * [@haoch](http://github.com/haoch) (hao AT apache DOT org)
+
+## Contribution
+
+Welcome to make contribution to code or document by by [sending a pull request](https://github.com/haoch/flink-siddhi/pulls), or [report issues or bugs](https://github.com/haoch/flink-siddhi/issues).
 
 ## License
 
