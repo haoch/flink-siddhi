@@ -88,7 +88,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 
 ## Contribution
 
-Welcome to make contribution to code or document by by [sending a pull request](https://github.com/haoch/flink-siddhi/pulls), or [report issues or bugs](https://github.com/haoch/flink-siddhi/issues).
+Welcome to make contribution to code or document by [sending a pull request](https://github.com/haoch/flink-siddhi/pulls), or [reporting issues or bugs](https://github.com/haoch/flink-siddhi/issues).
 
 ## License
 
