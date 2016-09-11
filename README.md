@@ -84,6 +84,10 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * Support siddhi plugin management to extend CEP functions. (See `SiddhiCEP#registerExtension`)
      
 ## Support and Contact
+* Report Issues: https://github.com/haoch/flink-siddhi/issues
+* Documentations: https://github.com/haoch/flink-siddhi/wiki
+
+## Author and Contributors
 
 * [@haoch](http://github.com/haoch) (hao AT apache DOT org)
 
