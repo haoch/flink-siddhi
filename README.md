@@ -64,7 +64,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
         
         DataStream<Tuple5<Integer,String,Integer,String,Double>> output = cep
              .from("inputStream1").union("inputStream2")
-             .sql( 
+             .cql( 
              "from every s1 = inputStream1[id == 2] "
              + " -> s2 = inputStream2[id == 3] "
              + "select s1.id as id_1, s1.name as name_1, s2.id as id_2, s2.name as name_2 , custom:plus(s1.price,s2.price) as price"
