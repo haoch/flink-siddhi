@@ -24,8 +24,8 @@ import org.apache.flink.contrib.siddhi.schema.StreamSchema;
 import org.apache.flink.contrib.siddhi.utils.SiddhiTypeFactory;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
-import org.apache.flink.streaming.runtime.streamrecord.MultiplexingStreamRecordSerializer;
 import org.apache.flink.streaming.runtime.streamrecord.StreamElement;
+import org.apache.flink.streaming.runtime.streamrecord.StreamElementSerializer;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 
 import java.io.IOException;
@@ -41,9 +41,9 @@ public class SiddhiStreamOperator<IN, OUT> extends AbstractSiddhiOperator<Tuple2
 	}
 
 	@Override
-	protected MultiplexingStreamRecordSerializer<Tuple2<String, IN>> createStreamRecordSerializer(StreamSchema streamSchema, ExecutionConfig executionConfig) {
+	protected StreamElementSerializer<Tuple2<String, IN>> createStreamElementSerializer(StreamSchema streamSchema, ExecutionConfig executionConfig) {
 		TypeInformation<Tuple2<String, IN>> tuple2TypeInformation = SiddhiTypeFactory.getStreamTupleTypeInformation((TypeInformation<IN>) streamSchema.getTypeInfo());
-		return new MultiplexingStreamRecordSerializer<>(tuple2TypeInformation.createSerializer(executionConfig));
+		return new StreamElementSerializer<>(tuple2TypeInformation.createSerializer(executionConfig));
 	}
 
 	@Override
