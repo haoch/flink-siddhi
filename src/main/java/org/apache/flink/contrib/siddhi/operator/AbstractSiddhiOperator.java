@@ -17,7 +17,10 @@
 
 package org.apache.flink.contrib.siddhi.operator;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.common.state.ListState;
+import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.contrib.siddhi.exception.UndefinedStreamException;
 import org.apache.flink.contrib.siddhi.schema.StreamSchema;
 import org.apache.flink.core.fs.FSDataInputStream;
@@ -26,16 +29,17 @@ import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataInputViewStreamWrapper;
 import org.apache.flink.core.memory.DataOutputView;
 import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
-import org.apache.flink.runtime.state.CheckpointStreamFactory;
-import org.apache.flink.runtime.state.OperatorStateHandle;
+import org.apache.flink.runtime.state.StateInitializationContext;
+import org.apache.flink.runtime.state.StateSnapshotContext;
 import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.graph.StreamConfig;
 import org.apache.flink.streaming.api.operators.AbstractStreamOperator;
 import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.api.operators.Output;
 import org.apache.flink.streaming.api.operators.StreamCheckpointedOperator;
 import org.apache.flink.streaming.api.watermark.Watermark;
-import org.apache.flink.streaming.runtime.streamrecord.MultiplexingStreamRecordSerializer;
+import org.apache.flink.streaming.runtime.streamrecord.StreamElementSerializer;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.runtime.tasks.StreamTask;
 import org.slf4j.Logger;
@@ -49,9 +53,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.concurrent.RunnableFuture;
 
 /**
  * <h1>Siddhi Runtime Operator</h1>
@@ -83,14 +87,15 @@ import java.util.concurrent.RunnableFuture;
  * @param <IN>  Input Element Type
  * @param <OUT> Output Element Type
  */
-public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOperator<OUT> implements OneInputStreamOperator<IN, OUT>, StreamCheckpointedOperator {
+public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOperator<OUT>
+	implements OneInputStreamOperator<IN, OUT> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSiddhiOperator.class);
 	private static final int INITIAL_PRIORITY_QUEUE_CAPACITY = 11;
 
 	private final SiddhiOperatorContext siddhiPlan;
 	private final String executionExpression;
 	private final boolean isProcessingTime;
-	private final Map<String, MultiplexingStreamRecordSerializer<IN>> streamRecordSerializers;
+	private final Map<String, StreamElementSerializer<IN>> streamRecordSerializers;
 
 	private transient SiddhiManager siddhiManager;
 	private transient ExecutionPlanRuntime siddhiRuntime;
@@ -121,9 +126,9 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 		}
 	}
 
-	protected abstract MultiplexingStreamRecordSerializer<IN> createStreamRecordSerializer(StreamSchema streamSchema, ExecutionConfig executionConfig);
+	protected abstract StreamElementSerializer<IN> createStreamRecordSerializer(StreamSchema streamSchema, ExecutionConfig executionConfig);
 
-	protected MultiplexingStreamRecordSerializer<IN> getStreamRecordSerializer(String streamId) {
+	protected StreamElementSerializer<IN> getStreamRecordSerializer(String streamId) {
 		if (streamRecordSerializers.containsKey(streamId)) {
 			return streamRecordSerializers.get(streamId);
 		} else {
@@ -186,7 +191,6 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 	@Override
 	public void setup(StreamTask<?, ?> containingTask, StreamConfig config, Output<StreamRecord<OUT>> output) {
 		super.setup(containingTask, config, output);
-		startSiddhiRuntime();
 	}
 
 	@Override
@@ -195,6 +199,7 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 			priorityQueue = new PriorityQueue<>(INITIAL_PRIORITY_QUEUE_CAPACITY, new StreamRecordComparator<IN>());
 		}
 		super.open();
+		startSiddhiRuntime();
 	}
 
 	/**
@@ -261,49 +266,68 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 	public void dispose() throws Exception {
 		LOGGER.info("Disposing");
 		super.dispose();
+	}
+
+	@Override
+	public void close() throws Exception {
 		shutdownSiddhiRuntime();
-		output.close();
+		// Should shutdown until all siddhi data flushes
+		// super.close();
 	}
 
 	@Override
-	public void snapshotState(FSDataOutputStream out, long checkpointId, long timestamp) throws Exception {
-		final ObjectOutputStream oos = new ObjectOutputStream(out);
-
-		// Write siddhi snapshot
+	public void snapshotState(StateSnapshotContext context) throws Exception {
+		super.snapshotState(context);
 		byte[] siddhiRuntimeSnapshot = this.siddhiRuntime.snapshot();
-		int siddhiRuntimeSnapshotLength = siddhiRuntimeSnapshot.length;
-		oos.writeInt(siddhiRuntimeSnapshotLength);
-		out.write(siddhiRuntimeSnapshot, 0, siddhiRuntimeSnapshotLength);
-
-		// Write queue buffer snapshot
-		this.snapshotQueuerState(this.priorityQueue, new DataOutputViewStreamWrapper(oos));
-
-		oos.flush();
+		context.getRawOperatorStateOutput().write(siddhiRuntimeSnapshot);
 	}
 
 	@Override
-	public RunnableFuture<OperatorStateHandle> snapshotState(long checkpointId, long timestamp, CheckpointStreamFactory streamFactory) throws Exception {
-		return super.snapshotState(checkpointId, timestamp, streamFactory);
+	public void initializeState(StateInitializationContext context) throws Exception {
+		super.initializeState(context);
+		if (context.isRestored()) {
+			byte[] siddhiRuntimeSnapshot = IOUtils.toByteArray(context.getRawOperatorStateInputs().iterator().next().getStream());
+			this.siddhiRuntime.restore(siddhiRuntimeSnapshot);
+		}
 	}
 
-	@Override
-	public void restoreState(FSDataInputStream state) throws Exception {
-		final ObjectInputStream ois = new ObjectInputStream(state);
 
-		// Restore siddhi snapshot
-		startSiddhiRuntime();
-		int siddhiRuntimeSnapshotLength = ois.readInt();
-		byte[] siddhiRuntimeSnapshot = new byte[siddhiRuntimeSnapshotLength];
-		int readLength = ois.read(siddhiRuntimeSnapshot, 0, siddhiRuntimeSnapshotLength);
-		assert readLength == siddhiRuntimeSnapshotLength;
-		this.siddhiRuntime.restore(siddhiRuntimeSnapshot);
+	//	@Override
+//	public void snapshotState(FSDataOutputStream out, long checkpointId, long timestamp) throws Exception {
+//		final ObjectOutputStream oos = new ObjectOutputStream(out);
+//
+//		// Write siddhi snapshot
+//		byte[] siddhiRuntimeSnapshot = this.siddhiRuntime.snapshot();
+//		int siddhiRuntimeSnapshotLength = siddhiRuntimeSnapshot.length;
+//		oos.writeInt(siddhiRuntimeSnapshotLength);
+//		out.write(siddhiRuntimeSnapshot, 0, siddhiRuntimeSnapshotLength);
+//
+//		// Write queue buffer snapshot
+//		this.snapshotQueueState(this.priorityQueue, new DataOutputViewStreamWrapper(oos));
+//
+//		oos.flush();
+//	}
+//
+//	@Override
+//	public void restoreState(FSDataInputStream state) throws Exception {
+//		final ObjectInputStream ois = new ObjectInputStream(state);
+//
+//		// Restore siddhi snapshot
+//		startSiddhiRuntime();
+//		int siddhiRuntimeSnapshotLength = ois.readInt();
+//		byte[] siddhiRuntimeSnapshot = new byte[siddhiRuntimeSnapshotLength];
+//		int readLength = ois.read(siddhiRuntimeSnapshot, 0, siddhiRuntimeSnapshotLength);
+//		assert readLength == siddhiRuntimeSnapshotLength;
+//		this.siddhiRuntime.restore(siddhiRuntimeSnapshot);
+//
+//		// Restore queue buffer snapshot
+//		this.priorityQueue = restoreQueuerState(new DataInputViewStreamWrapper(ois));
+//	}
 
-		// Restore queue buffer snapshot
-		this.priorityQueue = restoreQueuerState(new DataInputViewStreamWrapper(ois));
-	}
 
-	protected abstract void snapshotQueuerState(PriorityQueue<StreamRecord<IN>> queue,
-												DataOutputView dataOutputView) throws IOException;
+
+	protected abstract void snapshotQueueState(PriorityQueue<StreamRecord<IN>> queue,
+											   DataOutputView dataOutputView) throws IOException;
 
 	protected abstract PriorityQueue<StreamRecord<IN>> restoreQueuerState(DataInputView dataInputView) throws IOException;
 }

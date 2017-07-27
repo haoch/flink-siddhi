@@ -19,6 +19,7 @@ package org.apache.flink.contrib.siddhi;
 
 import org.apache.flink.api.common.functions.InvalidTypesException;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
@@ -29,11 +30,21 @@ import org.apache.flink.contrib.siddhi.source.RandomEventSource;
 import org.apache.flink.contrib.siddhi.source.RandomTupleSource;
 import org.apache.flink.contrib.siddhi.source.RandomWordSource;
 import org.apache.flink.core.fs.FileSystem;
+import org.apache.flink.metrics.MetricGroup;
+import org.apache.flink.runtime.state.CheckpointStreamFactory;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
+import org.apache.flink.streaming.api.graph.StreamConfig;
+import org.apache.flink.streaming.api.operators.*;
+import org.apache.flink.streaming.api.watermark.Watermark;
+import org.apache.flink.streaming.runtime.streamrecord.LatencyMarker;
+import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+import org.apache.flink.streaming.runtime.tasks.OperatorStateHandles;
+import org.apache.flink.streaming.runtime.tasks.StreamTask;
 import org.apache.flink.streaming.util.StreamingMultipleProgramsTestBase;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -54,6 +65,24 @@ public class SiddhiCEPITCase extends StreamingMultipleProgramsTestBase {
 	public TemporaryFolder tempFolder = new TemporaryFolder();
 
 	@Test
+	public void testSimpleWriteAndRead() throws Exception {
+		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+		DataStream<Event> input = env.fromElements(
+			Event.of(1, "start", 1.0),
+			Event.of(2, "middle", 2.0),
+			Event.of(3, "end", 3.0),
+			Event.of(4, "start", 4.0),
+			Event.of(5, "middle", 5.0),
+			Event.of(6, "end", 6.0)
+		);
+
+		String path = tempFolder.newFile().toURI().toString();
+		input.transform("transformer", TypeInformation.of(Event.class), new StreamMap<>((MapFunction<Event, Event>) event -> event)).writeAsText(path);
+		env.execute();
+		Assert.assertEquals(6, getLineCount(path));
+	}
+
+	@Test
 	public void testSimplePojoStreamAndReturnPojo() throws Exception {
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		DataStream<Event> input = env.fromElements(
@@ -70,8 +99,9 @@ public class SiddhiCEPITCase extends StreamingMultipleProgramsTestBase {
 			.cql("from inputStream insert into  outputStream")
 			.returns("outputStream", Event.class);
 		String path = tempFolder.newFile().toURI().toString();
-		output.writeAsText(path);
+		output.print();
 		env.execute();
+		// Assert.assertEquals(6, getLineCount(path));
 	}
 
 	@Test

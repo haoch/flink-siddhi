@@ -32,39 +32,39 @@ import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 /**
  * Siddhi Stream output callback handler and conver siddhi {@link Event} to required output type,
  * according to output {@link TypeInformation} and siddhi schema {@link AbstractDefinition}
  */
-public class StreamOutputHandler<R> extends StreamCallback {
-	private static final Logger LOGGER = LoggerFactory.getLogger(StreamOutputHandler.class);
+public class StreamInMemOutputHandler<R> extends StreamCallback {
+	private static final Logger LOGGER = LoggerFactory.getLogger(StreamInMemOutputHandler.class);
 
 	private final AbstractDefinition definition;
-	private final Output<StreamRecord<R>> output;
 	private final TypeInformation<R> typeInfo;
 	private final ObjectMapper objectMapper;
 
-	public StreamOutputHandler(TypeInformation<R> typeInfo, AbstractDefinition definition, Output<StreamRecord<R>> output) {
+
+	private final LinkedList<StreamRecord<R>> collectedRecords;
+
+	public StreamInMemOutputHandler(TypeInformation<R> typeInfo, AbstractDefinition definition) {
 		this.typeInfo = typeInfo;
 		this.definition = definition;
-		this.output = output;
 		this.objectMapper = new ObjectMapper();
 		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		this.collectedRecords = new LinkedList<>();
 	}
 
 	@Override
 	public void receive(Event[] events) {
-		StreamRecord<R> reusableRecord = new StreamRecord<>(null, 0L);
 		for (Event event : events) {
 			if (typeInfo == null || Map.class.isAssignableFrom(typeInfo.getTypeClass())) {
-				reusableRecord.replace(toMap(event), event.getTimestamp());
-				output.collect(reusableRecord);
+				collectedRecords.add(new StreamRecord<R>((R) toMap(event), event.getTimestamp()));
 			} else if (typeInfo.isTupleType()) {
 				Tuple tuple = this.toTuple(event);
-				reusableRecord.replace(tuple, event.getTimestamp());
-				output.collect(reusableRecord);
+				collectedRecords.add(new StreamRecord<R>((R) tuple, event.getTimestamp()));
 			} else if (typeInfo instanceof PojoTypeInfo) {
 				R obj;
 				try {
@@ -73,8 +73,7 @@ public class StreamOutputHandler<R> extends StreamCallback {
 					LOGGER.error("Failed to map event: " + event + " into type: " + typeInfo, ex);
 					throw ex;
 				}
-				reusableRecord.replace(obj, event.getTimestamp());
-				output.collect(reusableRecord);
+				collectedRecords.add(new StreamRecord<R>(obj, event.getTimestamp()));
 			} else {
 				throw new IllegalArgumentException("Unable to format " + event + " as type " + typeInfo);
 			}
@@ -85,6 +84,7 @@ public class StreamOutputHandler<R> extends StreamCallback {
 	@Override
 	public synchronized void stopProcessing() {
 		super.stopProcessing();
+		this.collectedRecords.clear();
 	}
 
 	private Map<String, Object> toMap(Event event) {
@@ -97,5 +97,9 @@ public class StreamOutputHandler<R> extends StreamCallback {
 
 	private <T extends Tuple> T toTuple(Event event) {
 		return SiddhiTupleFactory.newTuple(event.getData());
+	}
+
+	public LinkedList<StreamRecord<R>> getCollectedRecords() {
+		return collectedRecords;
 	}
 }
