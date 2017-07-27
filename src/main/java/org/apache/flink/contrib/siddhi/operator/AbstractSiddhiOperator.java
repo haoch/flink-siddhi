@@ -155,6 +155,7 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 			} else {
 				priorityQueue.offer(element);
 			}
+			this.checkpointRecordQueueState();
 		}
 	}
 
