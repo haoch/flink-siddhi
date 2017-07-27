@@ -17,27 +17,24 @@
 
 package org.apache.flink.contrib.siddhi.operator;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.PriorityQueue;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.api.common.ExecutionConfig;
-import org.apache.flink.api.common.state.ListState;
-import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.contrib.siddhi.exception.UndefinedStreamException;
 import org.apache.flink.contrib.siddhi.schema.StreamSchema;
-import org.apache.flink.core.fs.FSDataInputStream;
-import org.apache.flink.core.fs.FSDataOutputStream;
 import org.apache.flink.core.memory.DataInputView;
-import org.apache.flink.core.memory.DataInputViewStreamWrapper;
 import org.apache.flink.core.memory.DataOutputView;
-import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
 import org.apache.flink.runtime.state.StateInitializationContext;
 import org.apache.flink.runtime.state.StateSnapshotContext;
 import org.apache.flink.streaming.api.TimeCharacteristic;
-import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.graph.StreamConfig;
 import org.apache.flink.streaming.api.operators.AbstractStreamOperator;
 import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.api.operators.Output;
-import org.apache.flink.streaming.api.operators.StreamCheckpointedOperator;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.runtime.streamrecord.StreamElementSerializer;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
@@ -48,14 +45,6 @@ import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
 
 /**
  * <h1>Siddhi Runtime Operator</h1>
@@ -191,14 +180,9 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 	@Override
 	public void setup(StreamTask<?, ?> containingTask, StreamConfig config, Output<StreamRecord<OUT>> output) {
 		super.setup(containingTask, config, output);
-	}
-
-	@Override
-	public void open() throws Exception {
 		if (priorityQueue == null) {
 			priorityQueue = new PriorityQueue<>(INITIAL_PRIORITY_QUEUE_CAPACITY, new StreamRecordComparator<IN>());
 		}
-		super.open();
 		startSiddhiRuntime();
 	}
 
@@ -265,14 +249,13 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 	@Override
 	public void dispose() throws Exception {
 		LOGGER.info("Disposing");
+		shutdownSiddhiRuntime();
 		super.dispose();
 	}
 
 	@Override
 	public void close() throws Exception {
-		shutdownSiddhiRuntime();
-		// Should shutdown until all siddhi data flushes
-		// super.close();
+		LOGGER.info("Closing");
 	}
 
 	@Override
@@ -290,7 +273,6 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 			this.siddhiRuntime.restore(siddhiRuntimeSnapshot);
 		}
 	}
-
 
 	//	@Override
 //	public void snapshotState(FSDataOutputStream out, long checkpointId, long timestamp) throws Exception {
