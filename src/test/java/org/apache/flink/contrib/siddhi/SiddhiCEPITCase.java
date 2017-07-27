@@ -17,6 +17,11 @@
 
 package org.apache.flink.contrib.siddhi;
 
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.flink.api.common.functions.InvalidTypesException;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -30,29 +35,16 @@ import org.apache.flink.contrib.siddhi.source.RandomEventSource;
 import org.apache.flink.contrib.siddhi.source.RandomTupleSource;
 import org.apache.flink.contrib.siddhi.source.RandomWordSource;
 import org.apache.flink.core.fs.FileSystem;
-import org.apache.flink.metrics.MetricGroup;
-import org.apache.flink.runtime.state.CheckpointStreamFactory;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
-import org.apache.flink.streaming.api.graph.StreamConfig;
-import org.apache.flink.streaming.api.operators.*;
-import org.apache.flink.streaming.api.watermark.Watermark;
-import org.apache.flink.streaming.runtime.streamrecord.LatencyMarker;
-import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
-import org.apache.flink.streaming.runtime.tasks.OperatorStateHandles;
-import org.apache.flink.streaming.runtime.tasks.StreamTask;
+import org.apache.flink.streaming.api.operators.StreamMap;
 import org.apache.flink.streaming.util.StreamingMultipleProgramsTestBase;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -129,7 +121,8 @@ public class SiddhiCEPITCase extends StreamingMultipleProgramsTestBase {
 	@Test
 	public void testUnboundedTupleSourceAndReturnTuple() throws Exception {
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-		DataStream<Tuple4<Integer, String, Double, Long>> input = env.addSource(new RandomTupleSource(5).closeDelay(1500));
+		DataStream<Tuple4<Integer, String, Double, Long>> input = env
+			.addSource(new RandomTupleSource(5).closeDelay(1500)).keyBy(1);
 
 		DataStream<Tuple4<Long, Integer, String, Double>> output = SiddhiCEP
 			.define("inputStream", input, "id", "name", "price", "timestamp")
