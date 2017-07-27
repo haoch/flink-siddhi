@@ -308,8 +308,7 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 
 
 
-	protected abstract void snapshotQueueState(PriorityQueue<StreamRecord<IN>> queue,
-											   DataOutputView dataOutputView) throws IOException;
+	protected abstract void snapshotQueueState(PriorityQueue<StreamRecord<IN>> queue, DataOutputView dataOutputView) throws IOException;
 
 	protected abstract PriorityQueue<StreamRecord<IN>> restoreQueuerState(DataInputView dataInputView) throws IOException;
 }

@@ -17,23 +17,22 @@
 
 package org.apache.flink.contrib.siddhi.operator;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
+
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
 import org.apache.flink.contrib.siddhi.utils.SiddhiTupleFactory;
-import org.apache.flink.streaming.api.operators.Output;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
-
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Siddhi Stream output callback handler and conver siddhi {@link Event} to required output type,
