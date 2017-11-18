@@ -21,7 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.wso2.siddhi.core.ExecutionPlanRuntime;
+import org.wso2.siddhi.core.SiddhiAppRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.stream.input.InputHandler;
@@ -46,7 +46,7 @@ public class SiddhiSyntaxTest {
 
 	@Test
 	public void testSimplePlan() throws InterruptedException {
-		ExecutionPlanRuntime runtime = siddhiManager.createExecutionPlanRuntime(
+		SiddhiAppRuntime runtime = siddhiManager.createSiddhiAppRuntime(
 			"define stream inStream (name string, value double);"
 				+ "from inStream insert into outStream");
 		runtime.start();

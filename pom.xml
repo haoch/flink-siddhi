@@ -31,7 +31,7 @@ under the License.
     <packaging>jar</packaging>
 
     <properties>
-        <siddhi.version>3.0.5</siddhi.version>
+        <siddhi.version>4.0.0-M120</siddhi.version>
         <flink.version>1.3.2</flink.version>
         <scala.binary.version>2.10</scala.binary.version>
     </properties>
@@ -41,6 +41,17 @@ under the License.
         <dependency>
             <groupId>org.wso2.siddhi</groupId>
             <artifactId>siddhi-core</artifactId>
+            <version>${siddhi.version}</version>
+            <exclusions>
+                <exclusion>  <!-- declare the exclusion here -->
+                    <groupId>org.apache.directory.jdbm</groupId>
+                    <artifactId>apacheds-jdbm1</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.siddhi</groupId>
+            <artifactId>siddhi-query-api</artifactId>
             <version>${siddhi.version}</version>
             <exclusions>
                 <exclusion>  <!-- declare the exclusion here -->
@@ -142,7 +153,6 @@ under the License.
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
-
 
     <build>
         <pluginManagement>

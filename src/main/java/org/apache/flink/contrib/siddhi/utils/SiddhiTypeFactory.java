@@ -23,10 +23,11 @@ import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.api.java.typeutils.TypeInfoParser;
-import org.wso2.siddhi.core.ExecutionPlanRuntime;
+import org.wso2.siddhi.core.SiddhiAppRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
+import org.wso2.siddhi.query.api.definition.StreamDefinition;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,11 +65,11 @@ public class SiddhiTypeFactory {
 
 	public static AbstractDefinition getStreamDefinition(String executionPlan, String streamId) {
 		SiddhiManager siddhiManager = null;
-		ExecutionPlanRuntime runtime = null;
+		SiddhiAppRuntime runtime = null;
 		try {
 			siddhiManager = new SiddhiManager();
-			runtime = siddhiManager.createExecutionPlanRuntime(executionPlan);
-			Map<String, AbstractDefinition> definitionMap = runtime.getStreamDefinitionMap();
+			runtime = siddhiManager.createSiddhiAppRuntime(executionPlan);
+			Map<String, StreamDefinition> definitionMap = runtime.getStreamDefinitionMap();
 			if (definitionMap.containsKey(streamId)) {
 				return definitionMap.get(streamId);
 			} else {
