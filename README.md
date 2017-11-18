@@ -6,7 +6,7 @@ flink-siddhi
 
 > A light-weight library to run [Siddhi CEP](https://github.com/wso2/siddhi) within [Apache Flink](https://github.com/apache/flink) streaming application.
 
-__Version:`0.1.0-SNAPSHOT`__
+__Version:`0.1.1-SNAPSHOT`__
 
 ## About
 
@@ -18,8 +18,10 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 ## Development
 
 ## Prerequisites
+
 * Java (Version: `1.8`)
 * Apache Maven
+* Apache Flink (Version: `1.3.2`)
 
 ### Clone
 	git clone git@github.com:haoch/flink-siddhi.git
@@ -40,7 +42,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
                 <dependency>
                         <groupId>com.github.haoch</groupId>
                         <artifactId>flink-siddhi_2.10<artifactId>
-                        <version>0.1.0-SNAPSHOT</version>
+                        <version>0.1.1-SNAPSHOT</version>
                 </dependency>
         </dependencies>
         
