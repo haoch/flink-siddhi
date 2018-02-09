@@ -23,12 +23,14 @@ under the License.
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.haoch</groupId>
-    <artifactId>flink-siddhi_2.11</artifactId>
-    <name>flink-siddhi</name>
+    <artifactId>flink-siddhi-parent_2.11</artifactId>
 
-    <version>0.1.2-SNAPSHOT</version>
+    <version>0.1.3-SNAPSHOT</version>
+    <modules>
+        <module>core</module>
+    </modules>
 
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <properties>
         <siddhi.version>4.0.0-M120</siddhi.version>
