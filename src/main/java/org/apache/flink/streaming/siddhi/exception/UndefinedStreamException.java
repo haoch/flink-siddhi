@@ -18,7 +18,7 @@
 package org.apache.flink.streaming.siddhi.exception;
 
 public class UndefinedStreamException extends RuntimeException {
-	public UndefinedStreamException(String message) {
-		super(message);
-	}
+    public UndefinedStreamException(String message) {
+        super(message);
+    }
 }

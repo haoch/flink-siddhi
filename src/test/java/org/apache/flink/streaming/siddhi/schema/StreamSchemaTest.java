@@ -30,65 +30,65 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class StreamSchemaTest {
-	@Test
-	public void testStreamSchemaWithPojo() {
-		TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
-		assertTrue("Type information should be PojoTypeInfo", typeInfo instanceof PojoTypeInfo);
-		StreamSchema<Event> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
-		assertEquals(4, schema.getFieldIndexes().length);
-		assertEquals(Event.class, schema.getTypeInfo().getTypeClass());
-	}
+    @Test
+    public void testStreamSchemaWithPojo() {
+        TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
+        assertTrue("Type information should be PojoTypeInfo", typeInfo instanceof PojoTypeInfo);
+        StreamSchema<Event> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
+        assertEquals(4, schema.getFieldIndexes().length);
+        assertEquals(Event.class, schema.getTypeInfo().getTypeClass());
+    }
 
-	@Test
-	public void testStreamSchemaWithTuple() {
-		TypeInformation<Tuple4> typeInfo = TypeInfoParser.parse("Tuple4<Integer,Long,String,Double>");
-		StreamSchema<Tuple4> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
-		assertEquals(Tuple4.class, schema.getTypeInfo().getTypeClass());
-		assertEquals(4, schema.getFieldIndexes().length);
-		assertEquals(Tuple4.class, schema.getTypeInfo().getTypeClass());
-	}
+    @Test
+    public void testStreamSchemaWithTuple() {
+        TypeInformation<Tuple4> typeInfo = TypeInfoParser.parse("Tuple4<Integer,Long,String,Double>");
+        StreamSchema<Tuple4> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
+        assertEquals(Tuple4.class, schema.getTypeInfo().getTypeClass());
+        assertEquals(4, schema.getFieldIndexes().length);
+        assertEquals(Tuple4.class, schema.getTypeInfo().getTypeClass());
+    }
 
-	@Test
-	public void testStreamSchemaWithPrimitive() {
-		TypeInformation<String> typeInfo = TypeInfoParser.parse("String");
-		StreamSchema<String> schema = new StreamSchema<>(typeInfo, "words");
-		assertEquals(String.class, schema.getTypeInfo().getTypeClass());
-		assertEquals(1, schema.getFieldIndexes().length);
-		assertEquals(String.class, schema.getTypeInfo().getTypeClass());
-	}
+    @Test
+    public void testStreamSchemaWithPrimitive() {
+        TypeInformation<String> typeInfo = TypeInfoParser.parse("String");
+        StreamSchema<String> schema = new StreamSchema<>(typeInfo, "words");
+        assertEquals(String.class, schema.getTypeInfo().getTypeClass());
+        assertEquals(1, schema.getFieldIndexes().length);
+        assertEquals(String.class, schema.getTypeInfo().getTypeClass());
+    }
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testStreamSchemaWithPojoAndUnknownField() {
-		TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
-		new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price", "unknown");
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void testStreamSchemaWithPojoAndUnknownField() {
+        TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
+        new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price", "unknown");
+    }
 
-	@Test
-	public void testStreamTupleSerializerWithPojo() {
-		TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
-		assertTrue("Type information should be PojoTypeInfo", typeInfo instanceof PojoTypeInfo);
-		StreamSchema<Event> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
-		assertEquals(Event.class, schema.getTypeInfo().getTypeClass());
+    @Test
+    public void testStreamTupleSerializerWithPojo() {
+        TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
+        assertTrue("Type information should be PojoTypeInfo", typeInfo instanceof PojoTypeInfo);
+        StreamSchema<Event> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
+        assertEquals(Event.class, schema.getTypeInfo().getTypeClass());
 
-		TypeInformation<Tuple2<String, Event>> tuple2TypeInformation = TypeInfoParser.parse("Tuple2<String," + schema.getTypeInfo().getTypeClass().getName() + ">");
-		assertEquals("Java Tuple2<String, GenericType<" + Event.class.getName() + ">>", tuple2TypeInformation.toString());
-	}
+        TypeInformation<Tuple2<String, Event>> tuple2TypeInformation = TypeInfoParser.parse("Tuple2<String," + schema.getTypeInfo().getTypeClass().getName() + ">");
+        assertEquals("Java Tuple2<String, GenericType<" + Event.class.getName() + ">>", tuple2TypeInformation.toString());
+    }
 
-	@Test
-	public void testStreamTupleSerializerWithTuple() {
-		TypeInformation<Tuple4> typeInfo = TypeInfoParser.parse("Tuple4<Integer,Long,String,Double>");
-		StreamSchema<Tuple4> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
-		assertEquals(Tuple4.class, schema.getTypeInfo().getTypeClass());
-		TypeInformation<Tuple2<String, Tuple4>> tuple2TypeInformation = TypeInfoParser.parse("Tuple2<String," + schema.getTypeInfo().getTypeClass().getName() + ">");
-		assertEquals("Java Tuple2<String, GenericType<" + Tuple4.class.getName() + ">>", tuple2TypeInformation.toString());
-	}
+    @Test
+    public void testStreamTupleSerializerWithTuple() {
+        TypeInformation<Tuple4> typeInfo = TypeInfoParser.parse("Tuple4<Integer,Long,String,Double>");
+        StreamSchema<Tuple4> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
+        assertEquals(Tuple4.class, schema.getTypeInfo().getTypeClass());
+        TypeInformation<Tuple2<String, Tuple4>> tuple2TypeInformation = TypeInfoParser.parse("Tuple2<String," + schema.getTypeInfo().getTypeClass().getName() + ">");
+        assertEquals("Java Tuple2<String, GenericType<" + Tuple4.class.getName() + ">>", tuple2TypeInformation.toString());
+    }
 
-	@Test
-	public void testStreamTupleSerializerWithPrimitive() {
-		TypeInformation<String> typeInfo = TypeInfoParser.parse("String");
-		StreamSchema<String> schema = new StreamSchema<>(typeInfo, "words");
-		assertEquals(String.class, schema.getTypeInfo().getTypeClass());
-		TypeInformation<Tuple2<String, String>> tuple2TypeInformation = TypeInfoParser.parse("Tuple2<String," + schema.getTypeInfo().getTypeClass().getName() + ">");
-		assertEquals("Java Tuple2<String, String>", tuple2TypeInformation.toString());
-	}
+    @Test
+    public void testStreamTupleSerializerWithPrimitive() {
+        TypeInformation<String> typeInfo = TypeInfoParser.parse("String");
+        StreamSchema<String> schema = new StreamSchema<>(typeInfo, "words");
+        assertEquals(String.class, schema.getTypeInfo().getTypeClass());
+        TypeInformation<Tuple2<String, String>> tuple2TypeInformation = TypeInfoParser.parse("Tuple2<String," + schema.getTypeInfo().getTypeClass().getName() + ">");
+        assertEquals("Java Tuple2<String, String>", tuple2TypeInformation.toString());
+    }
 }

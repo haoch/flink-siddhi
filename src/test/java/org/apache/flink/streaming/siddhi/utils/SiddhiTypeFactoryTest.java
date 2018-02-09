@@ -26,25 +26,25 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class SiddhiTypeFactoryTest {
-	@Test
-	public void testTypeInfoParser() {
-		TypeInformation<Tuple3<String, Long, Object>> type1 = TypeInfoParser.parse("Tuple3<String,Long,java.lang.Object>");
-		Assert.assertNotNull(type1);
-		TypeInformation<Tuple4<String, Long, Object, InnerPojo>> type2 = TypeInfoParser.parse("Tuple4<" + String.class.getName() + ", " + Long.class.getName() + ", " + java.lang.Object.class.getName() + "," + InnerPojo.class.getName() + ">");
-		Assert.assertNotNull(type2);
-	}
+    @Test
+    public void testTypeInfoParser() {
+        TypeInformation<Tuple3<String, Long, Object>> type1 = TypeInfoParser.parse("Tuple3<String,Long,java.lang.Object>");
+        Assert.assertNotNull(type1);
+        TypeInformation<Tuple4<String, Long, Object, InnerPojo>> type2 = TypeInfoParser.parse("Tuple4<" + String.class.getName() + ", " + Long.class.getName() + ", " + java.lang.Object.class.getName() + "," + InnerPojo.class.getName() + ">");
+        Assert.assertNotNull(type2);
+    }
 
-	public static class InnerPojo {
-	}
+    public static class InnerPojo {
+    }
 
-	@Test
-	public void testBuildTypeInformationForSiddhiStream() {
-		String query = "define stream inputStream (timestamp long, name string, value double);"
-			+ "from inputStream select name, value insert into outputStream;";
-		TypeInformation<Tuple3<Long, String, Double>> inputStreamType = SiddhiTypeFactory.getTupleTypeInformation(query, "inputStream");
-		TypeInformation<Tuple2<String, Double>> outputStreamType = SiddhiTypeFactory.getTupleTypeInformation(query, "outputStream");
+    @Test
+    public void testBuildTypeInformationForSiddhiStream() {
+        String query = "define stream inputStream (timestamp long, name string, value double);"
+            + "from inputStream select name, value insert into outputStream;";
+        TypeInformation<Tuple3<Long, String, Double>> inputStreamType = SiddhiTypeFactory.getTupleTypeInformation(query, "inputStream");
+        TypeInformation<Tuple2<String, Double>> outputStreamType = SiddhiTypeFactory.getTupleTypeInformation(query, "outputStream");
 
-		Assert.assertNotNull(inputStreamType);
-		Assert.assertNotNull(outputStreamType);
-	}
+        Assert.assertNotNull(inputStreamType);
+        Assert.assertNotNull(outputStreamType);
+    }
 }

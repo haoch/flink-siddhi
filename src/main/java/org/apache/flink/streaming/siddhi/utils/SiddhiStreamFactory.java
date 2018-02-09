@@ -26,8 +26,8 @@ import org.apache.flink.streaming.api.datastream.DataStream;
  * Convert SiddhiCEPExecutionPlan to SiddhiCEP Operator and build output DataStream
  */
 public class SiddhiStreamFactory {
-	@SuppressWarnings("unchecked")
-	public static <OUT> DataStream<OUT> createDataStream(SiddhiOperatorContext context, DataStream<Tuple2<String, Object>> namedStream) {
-		return namedStream.transform(context.getName(), context.getOutputStreamType(), new SiddhiStreamOperator(context));
-	}
+    @SuppressWarnings("unchecked")
+    public static <OUT> DataStream<OUT> createDataStream(SiddhiOperatorContext context, DataStream<Tuple2<String, Object>> namedStream) {
+        return namedStream.transform(context.getName(), context.getOutputStreamType(), new SiddhiStreamOperator(context));
+    }
 }

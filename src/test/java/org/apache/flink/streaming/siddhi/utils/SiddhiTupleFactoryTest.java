@@ -24,23 +24,23 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class SiddhiTupleFactoryTest {
-	@Test
-	public void testConvertObjectArrayToTuple() {
-		Object[] row = new Object[]{1, "message", 1234567L, true, new Object()};
-		Tuple5 tuple5 = SiddhiTupleFactory.newTuple(row);
-		assertEquals(5, tuple5.getArity());
-		assertArrayEquals(row, new Object[]{
-			tuple5.f0,
-			tuple5.f1,
-			tuple5.f2,
-			tuple5.f3,
-			tuple5.f4
-		});
-	}
+    @Test
+    public void testConvertObjectArrayToTuple() {
+        Object[] row = new Object[]{1, "message", 1234567L, true, new Object()};
+        Tuple5 tuple5 = SiddhiTupleFactory.newTuple(row);
+        assertEquals(5, tuple5.getArity());
+        assertArrayEquals(row, new Object[]{
+            tuple5.f0,
+            tuple5.f1,
+            tuple5.f2,
+            tuple5.f3,
+            tuple5.f4
+        });
+    }
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testConvertTooLongObjectArrayToTuple() {
-		Object[] row = new Object[26];
-		SiddhiTupleFactory.newTuple(row);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void testConvertTooLongObjectArrayToTuple() {
+        Object[] row = new Object[26];
+        SiddhiTupleFactory.newTuple(row);
+    }
 }

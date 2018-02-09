@@ -18,7 +18,7 @@
 package org.apache.flink.streaming.siddhi.exception;
 
 public class DuplicatedStreamException extends RuntimeException {
-	public DuplicatedStreamException(String message) {
-		super(message);
-	}
+    public DuplicatedStreamException(String message) {
+        super(message);
+    }
 }

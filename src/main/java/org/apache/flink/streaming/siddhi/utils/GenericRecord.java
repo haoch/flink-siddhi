@@ -15,27 +15,41 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.siddhi.operator;
-
-import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+package org.apache.flink.streaming.siddhi.utils;
 
 import java.io.Serializable;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-/**
- * Stream Record Timestamp Comparator
- */
-public class StreamRecordComparator<IN> implements Comparator<StreamRecord<IN>>, Serializable {
-    private static final long serialVersionUID = 1581054988433915305L;
+public class GenericRecord implements Serializable {
+    private final Map<String, Object> map;
+
+    public GenericRecord() {
+        this.map = new LinkedHashMap<>();
+    }
+
+    public GenericRecord(Map<String, Object> map) {
+        this.map = new LinkedHashMap<>(map);
+    }
+
+    public Map<String, Object> getMap() {
+        return map;
+    }
+
+    public void setMap(Map<String, Object> map) {
+        this.map.putAll(map);
+    }
+
+    public Object get(String field) {
+        return map.get(field);
+    }
+
+    public void put(String field, Object value) {
+        this.map.put(field, value);
+    }
 
     @Override
-    public int compare(StreamRecord<IN> o1, StreamRecord<IN> o2) {
-        if (o1.getTimestamp() < o2.getTimestamp()) {
-            return -1;
-        } else if (o1.getTimestamp() > o2.getTimestamp()) {
-            return 1;
-        } else {
-            return 0;
-        }
+    public String toString() {
+        return this.getMap().toString();
     }
 }
