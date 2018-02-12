@@ -59,6 +59,7 @@ import org.wso2.siddhi.core.SiddhiAppRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
+import org.wso2.siddhi.query.api.definition.StreamDefinition;
 
 /**
  * <h1>Siddhi Runtime Operator</h1>
@@ -160,10 +161,16 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
         private void registerInputAndOutput() {
             AbstractDefinition definition = this.siddhiRuntime.getStreamDefinitionMap()
                 .get(siddhiPlan.getOutputStreamId());
-            siddhiRuntime.addCallback(siddhiPlan.getOutputStreamId(),
-                new StreamOutputHandler<>(siddhiPlan.getOutputStreamType(), definition, output));
+            Map<String, StreamDefinition> streamDefinitionMap = siddhiRuntime.getStreamDefinitionMap();
+            if (streamDefinitionMap.containsKey(siddhiPlan.getOutputStreamId())) {
+                siddhiRuntime.addCallback(siddhiPlan.getOutputStreamId(),
+                    new StreamOutputHandler<>(siddhiPlan.getOutputStreamType(), definition, output));
+            }
+
             for (String inputStreamId : siddhiPlan.getInputStreams()) {
-                inputStreamHandlers.put(inputStreamId, siddhiRuntime.getInputHandler(inputStreamId));
+                if (streamDefinitionMap.containsKey(inputStreamId)) {
+                    inputStreamHandlers.put(inputStreamId, siddhiRuntime.getInputHandler(inputStreamId));
+                }
             }
         }
     }

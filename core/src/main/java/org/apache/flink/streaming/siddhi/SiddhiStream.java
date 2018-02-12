@@ -24,14 +24,17 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.api.java.typeutils.TypeInfoParser;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.siddhi.control.ControlEvent;
 import org.apache.flink.streaming.siddhi.operator.SiddhiOperatorContext;
 import org.apache.flink.streaming.siddhi.utils.GenericRecord;
 import org.apache.flink.streaming.siddhi.utils.SiddhiStreamFactory;
 import org.apache.flink.streaming.siddhi.utils.SiddhiTypeFactory;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 
 import java.util.Arrays;
@@ -40,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Siddhi CEP Stream API
+ * Siddhi CEP Stream API.
  */
 @PublicEvolving
 public abstract class SiddhiStream {
@@ -50,7 +53,7 @@ public abstract class SiddhiStream {
      * @param cepEnvironment SiddhiCEP cepEnvironment.
      */
     public SiddhiStream(SiddhiCEP cepEnvironment) {
-        Preconditions.checkNotNull(cepEnvironment,"SiddhiCEP cepEnvironment is null");
+        Preconditions.checkNotNull(cepEnvironment, "SiddhiCEP cepEnvironment is null");
         this.cepEnvironment = cepEnvironment;
     }
 
@@ -107,7 +110,7 @@ public abstract class SiddhiStream {
          * @return ExecutionSiddhiStream context
          */
         public ExecutionSiddhiStream cql(String executionPlan) {
-            Preconditions.checkNotNull(executionPlan,"executionPlan");
+            Preconditions.checkNotNull(executionPlan, "executionPlan");
             return new ExecutionSiddhiStream(this.toDataStream(), executionPlan, getCepEnvironment());
         }
 
@@ -116,14 +119,31 @@ public abstract class SiddhiStream {
          *
          * @return ExecutionSiddhiStream context
          */
-        public ExecutionSiddhiStream cql(DataStream<ControlEvent> eventDataStream) {
-            return new ExecutionSiddhiStream(this.toDataStream().union(eventDataStream
-                .map(new MapFunction<ControlEvent, Tuple2<String, Object>>() {
-                    @Override
-                    public Tuple2<String, Object> map(ControlEvent controlEvent) throws Exception {
-                        return Tuple2.of(ControlEvent.DEFAULT_INTERNAL_CONTROL_STREAM, (Object) controlEvent);
-                    }
-                })), null, getCepEnvironment());
+        public ExecutionSiddhiStream cql(DataStream<ControlEvent> controlStream) {
+            return new ExecutionSiddhiStream(controlStream
+                .map(new NamedControlStream(ControlEvent.DEFAULT_INTERNAL_CONTROL_STREAM))
+                .broadcast().union(this.toDataStream()), null, getCepEnvironment());
+        }
+
+        private static class NamedControlStream
+            implements MapFunction<ControlEvent, Tuple2<String, Object>>, ResultTypeQueryable {
+            private static final TypeInformation<Tuple2<String, Object>> TYPE_INFO =
+                TypeInfoParser.parse("Tuple2<java.lang.String, java.lang.Object>");
+            private final String streamId;
+
+            NamedControlStream(String streamId) {
+                this.streamId = streamId;
+            }
+
+            @Override
+            public Tuple2<String, Object> map(ControlEvent value) throws Exception {
+                return Tuple2.of(this.streamId, value);
+            }
+
+            @Override
+            public TypeInformation getProducedType() {
+                return TYPE_INFO;
+            }
         }
     }
 
@@ -143,10 +163,9 @@ public abstract class SiddhiStream {
         /**
          * Define siddhi stream with streamId, source <code>DataStream</code> and stream schema and as the first stream of {@link UnionSiddhiStream}
          *
-         * @param streamId Unique siddhi streamId
+         * @param streamId   Unique siddhi streamId
          * @param dataStream DataStream to bind to the siddhi stream.
          * @param fieldNames Siddhi stream schema field names
-         *
          * @return {@link UnionSiddhiStream} context
          */
         public UnionSiddhiStream<T> union(String streamId, DataStream<T> dataStream, String... fieldNames) {
@@ -159,7 +178,7 @@ public abstract class SiddhiStream {
          * @return {@link UnionSiddhiStream} context
          */
         public UnionSiddhiStream<T> union(String... streamIds) {
-            Preconditions.checkNotNull(streamIds,"streamIds");
+            Preconditions.checkNotNull(streamIds, "streamIds");
             return new UnionSiddhiStream<T>(this.streamId, Arrays.asList(streamIds), this.getCepEnvironment());
         }
 
@@ -175,8 +194,8 @@ public abstract class SiddhiStream {
 
         public UnionSiddhiStream(String firstStreamId, List<String> unionStreamIds, SiddhiCEP environment) {
             super(environment);
-            Preconditions.checkNotNull(firstStreamId,"firstStreamId");
-            Preconditions.checkNotNull(unionStreamIds,"unionStreamIds");
+            Preconditions.checkNotNull(firstStreamId, "firstStreamId");
+            Preconditions.checkNotNull(unionStreamIds, "unionStreamIds");
             environment.checkStreamDefined(firstStreamId);
             for (String unionStreamId : unionStreamIds) {
                 environment.checkStreamDefined(unionStreamId);
@@ -188,16 +207,15 @@ public abstract class SiddhiStream {
         /**
          * Define siddhi stream with streamId, source <code>DataStream</code> and stream schema and continue to union it with current stream.
          *
-         * @param streamId Unique siddhi streamId
+         * @param streamId   Unique siddhi streamId
          * @param dataStream DataStream to bind to the siddhi stream.
          * @param fieldNames Siddhi stream schema field names
-         *
          * @return {@link UnionSiddhiStream} context
          */
         public UnionSiddhiStream<T> union(String streamId, DataStream<T> dataStream, String... fieldNames) {
-            Preconditions.checkNotNull(streamId,"streamId");
-            Preconditions.checkNotNull(dataStream,"dataStream");
-            Preconditions.checkNotNull(fieldNames,"fieldNames");
+            Preconditions.checkNotNull(streamId, "streamId");
+            Preconditions.checkNotNull(dataStream, "dataStream");
+            Preconditions.checkNotNull(fieldNames, "fieldNames");
             getCepEnvironment().registerStream(streamId, dataStream, fieldNames);
             return union(streamId);
         }
@@ -267,12 +285,11 @@ public abstract class SiddhiStream {
          */
         public DataStream<Map<String, Object>> returnAsMap(String outStreamId) {
             return this.returnsInternal(outStreamId, SiddhiTypeFactory.getMapTypeInformation())
-                .map(new MapFunction<GenericRecord, Map<String, Object>>() {
-                @Override
-                public Map<String, Object> map(GenericRecord value) throws Exception {
-                    return value.getMap();
-                }
-            });
+                .map((MapFunction<GenericRecord, Map<String, Object>>) GenericRecord::getMap);
+        }
+
+        public DataStream<Row> returnAsRow(String outStreamId) {
+            return this.returnsInternal(outStreamId, TypeExtractor.createTypeInfo(Row.class));
         }
 
         /**
@@ -283,6 +300,15 @@ public abstract class SiddhiStream {
          */
         public <T> DataStream<T> returns(String outStreamId, Class<T> outType) {
             TypeInformation<T> typeInformation = TypeExtractor.getForClass(outType);
+            return returnsInternal(outStreamId, typeInformation);
+        }
+
+        /**
+         * @param outStreamId OutStreamId
+         * @param <T>         Output type
+         * @return Return output stream as POJO class.
+         */
+        public <T> DataStream<T> returns(String outStreamId, TypeInformation<T> typeInformation) {
             return returnsInternal(outStreamId, typeInformation);
         }
 

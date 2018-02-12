@@ -22,6 +22,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.CompositeType;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
+import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.scala.typeutils.CaseClassTypeInfo;
 import org.apache.flink.util.Preconditions;
@@ -31,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 
 /**
- * Generic Field-based Stream Schema
+ * Generic Field-based Stream Schema.
  *
  * @param <T> Stream element type
  */
@@ -69,6 +70,10 @@ public class StreamSchema<T> implements Serializable {
         return typeInfo instanceof TupleTypeInfo;
     }
 
+    public boolean isRowType() {
+        return typeInfo instanceof RowTypeInfo;
+    }
+
     public boolean isPojoType() {
         return typeInfo instanceof PojoTypeInfo;
     }
@@ -85,7 +90,7 @@ public class StreamSchema<T> implements Serializable {
         int[] result;
         if (isAtomicType()) {
             result = new int[]{0};
-        } else if (isTupleType()) {
+        } else if (isTupleType() || isRowType()) {
             result = new int[fieldNames.length];
             for (int i = 0; i < fieldNames.length; i++) {
                 result[i] = i;

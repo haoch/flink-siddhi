@@ -46,12 +46,14 @@ import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExt
 import org.apache.flink.streaming.api.operators.StreamMap;
 import org.apache.flink.streaming.siddhi.control.ControlEvent;
 import org.apache.flink.streaming.util.StreamingMultipleProgramsTestBase;
+import org.apache.flink.types.Row;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Flink-siddhi library integration test cases
@@ -100,6 +102,28 @@ public class SiddhiCEPITCase extends StreamingMultipleProgramsTestBase implement
             .define("inputStream", input, "id", "name", "price")
             .cql("from inputStream insert into  outputStream")
             .returns("outputStream", Event.class);
+        String resultPath = tempFolder.newFile().toURI().toString();
+        output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
+        env.execute();
+        assertEquals(6, getLineCount(resultPath));
+    }
+
+    @Test
+    public void testSimplePojoStreamAndReturnRow() throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStream<Event> input = env.fromElements(
+            Event.of(1, "start", 1.0),
+            Event.of(2, "middle", 2.0),
+            Event.of(3, "end", 3.0),
+            Event.of(4, "start", 4.0),
+            Event.of(5, "middle", 5.0),
+            Event.of(6, "end", 6.0)
+        );
+
+        DataStream<Row> output = SiddhiCEP
+            .define("inputStream", input, "id", "name", "price")
+            .cql("from inputStream insert into  outputStream")
+            .returnAsRow("outputStream");
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
@@ -334,6 +358,9 @@ public class SiddhiCEPITCase extends StreamingMultipleProgramsTestBase implement
     private static int getLineCount(String resPath) throws IOException {
         List<String> result = new LinkedList<>();
         readAllResultLines(result, resPath);
+        for (String line : result) {
+            System.out.println(line);
+        }
         return result.size();
     }
 
@@ -414,12 +441,14 @@ public class SiddhiCEPITCase extends StreamingMultipleProgramsTestBase implement
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(10).setName("test_event_1"),
+        DataStream<Event> input1 = env.addSource(new RandomEventSource(10).setName("event_stream_1"),
             "input1");
-        DataStream<Event> input2 = env.addSource(new RandomEventSource(10).setName("test_event_2"),
+        DataStream<Event> input2 = env.addSource(new RandomEventSource(10).setName("event_stream_2"),
             "input2");
-        DataStream<Event> input3 = env.addSource(new RandomEventSource(10).setName("test_event_3"),
+        DataStream<Event> input3 = env.addSource(new RandomEventSource(10).setName("event_stream_3"),
             "input3");
+        DataStream<Event> input4 = env.addSource(new RandomEventSource(10).setName("event_stream_4"),
+            "input4");
 
         DataStream<ControlEvent> controlStream = env.addSource(new SourceFunction<ControlEvent>() {
             @Override
@@ -427,15 +456,21 @@ public class SiddhiCEPITCase extends StreamingMultipleProgramsTestBase implement
                 String id1 = MetadataControlEvent.Builder.nextExecutionPlanId();
 
                 sourceContext.collect(MetadataControlEvent.builder()
-                    .addExecutionPlan(id1, "from inputStream1 select timestamp, id, name, price insert into outputStream;").build());
+                    .addExecutionPlan(id1,
+                        "from inputStream1 select timestamp, id, name, price insert into outputStream1;")
+                    .build());
 
                 String id2 = MetadataControlEvent.Builder.nextExecutionPlanId();
                 sourceContext.collect(MetadataControlEvent.builder()
-                    .addExecutionPlan(id2,"from inputStream2 select timestamp, id, name, price insert into outputStream;").build());
+                    .addExecutionPlan(id2,
+                        "from inputStream2 select timestamp, id, name, price insert into outputStream2;")
+                    .build());
 
                 String id3 = MetadataControlEvent.Builder.nextExecutionPlanId();
                 sourceContext.collect(MetadataControlEvent.builder()
-                    .addExecutionPlan(id3, "from inputStream3 select timestamp, id, name, price insert into outputStream;").build());
+                    .addExecutionPlan(id3,
+                        "from inputStream3 select timestamp, id, name, price insert into outputStream3;")
+                    .build());
 
                 sourceContext.collect(OperationControlEvent.enableQuery(id1));
                 sourceContext.collect(OperationControlEvent.enableQuery(id2));
@@ -448,16 +483,20 @@ public class SiddhiCEPITCase extends StreamingMultipleProgramsTestBase implement
             }
         });
 
-        DataStream<Event> output = SiddhiCEP
+        SiddhiStream.ExecutionSiddhiStream builder = SiddhiCEP
             .define("inputStream1", input1, "id", "name", "price", "timestamp")
             .union("inputStream2", input2, "id", "name", "price", "timestamp")
             .union("inputStream3", input3, "id", "name", "price", "timestamp")
-            .cql(controlStream)
-            .returns("outputStream", Event.class);
+            .union("inputStream4", input4, "id", "name", "price", "timestamp")
+            .cql(controlStream);
 
         String resultPath = tempFolder.newFile().toURI().toString();
-        output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
+
+        builder.returns("outputStream1", Event.class)
+            .union(builder.returns("outputStream2", Event.class))
+            .writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
-        assertEquals(8, getLineCount(resultPath));
+        assertTrue(getLineCount(resultPath) > 0);
+        assertTrue(getLineCount(resultPath) <= 20);
     }
 }
