@@ -12,6 +12,8 @@ import org.apache.flink.streaming.siddhi.SiddhiCEP
 import org.apache.flink.streaming.siddhi.control.ControlEventSchema
 import org.apache.flink.streaming.util.serialization.{JsonRowDeserializationSchema, SimpleStringSchema}
 
+import java.util
+
 object CEPPipeline {
 
   def main(args: Array[String]): Unit = {
