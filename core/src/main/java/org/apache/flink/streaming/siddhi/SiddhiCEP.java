@@ -125,7 +125,7 @@ public class SiddhiCEP {
     }
 
     /**
-     * Register stream with unique <code>streaId</code>, source <code>dataStream</code> and schema fields,
+     * Register stream with unique <code>streamId</code>, source <code>dataStream</code> and schema fields,
      * and select the registered stream as initial stream to connect to Siddhi Runtime.
      *
      * @see #registerStream(String, DataStream, String...)
