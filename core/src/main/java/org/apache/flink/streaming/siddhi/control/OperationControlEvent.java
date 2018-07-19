@@ -28,11 +28,11 @@ public class OperationControlEvent extends AbstractControlEvent {
     }
 
     public static OperationControlEvent enableQuery(String queryId) {
-        return new OperationControlEvent(Action.DISABLE_QUERY, queryId);
+        return new OperationControlEvent(Action.ENABLE_QUERY, queryId);
     }
 
     public static OperationControlEvent disableQuery(String queryId) {
-        return new OperationControlEvent(Action.ENABLE_QUERY, queryId);
+        return new OperationControlEvent(Action.DISABLE_QUERY, queryId);
     }
 
     public enum Action {
