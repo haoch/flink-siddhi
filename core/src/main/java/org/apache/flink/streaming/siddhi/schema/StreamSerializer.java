@@ -19,6 +19,7 @@ package org.apache.flink.streaming.siddhi.schema;
 
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 
 import java.io.Serializable;
@@ -46,6 +47,12 @@ public class StreamSerializer<T> implements Serializable {
             data = new Object[schema.getFieldIndexes().length];
             for (int i = 0; i < schema.getFieldIndexes().length; i++) {
                 data[i] = tuple.getField(schema.getFieldIndexes()[i]);
+            }
+        } else if (schema.isRowType()) {
+            Row row = (Row) input;
+            data = new Object[schema.getFieldIndexes().length];
+            for (int i = 0; i < schema.getFieldIndexes().length; i++) {
+                data[i] = row.getField(schema.getFieldIndexes()[i]);
             }
         } else if (schema.isPojoType() || schema.isCaseClassType()) {
             data = new Object[schema.getFieldIndexes().length];

@@ -17,8 +17,12 @@
 
 package org.apache.flink.streaming.siddhi.schema;
 
+import org.apache.flink.api.java.tuple.Tuple4;
+import org.apache.flink.api.java.typeutils.RowTypeInfo;
+import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.streaming.siddhi.source.Event;
+import org.apache.flink.types.Row;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,15 +30,52 @@ public class StreamSerializerTest {
     private static final long CURRENT = System.currentTimeMillis();
 
     @Test
-    public void testSimplePojoRead() {
+    public void testAtomicType() {
+        StreamSchema<String> schema = new StreamSchema<>(TypeExtractor.createTypeInfo(String.class),
+                "word");
+        StreamSerializer<String> reader = new StreamSerializer<>(schema);
+        Assert.assertArrayEquals(new Object[]{"Siddhi"}, reader.getRow("Siddhi"));
+    }
+
+    @Test
+    public void testPojoType() {
         Event event = new Event();
         event.setId(1);
         event.setName("test");
         event.setPrice(56.7);
         event.setTimestamp(CURRENT);
 
-        StreamSchema<Event> schema = new StreamSchema<>(TypeExtractor.createTypeInfo(Event.class), "id", "name", "price", "timestamp");
+        StreamSchema<Event> schema = new StreamSchema<>(TypeExtractor.createTypeInfo(Event.class),
+                "id", "name", "price", "timestamp");
         StreamSerializer<Event> reader = new StreamSerializer<>(schema);
         Assert.assertArrayEquals(new Object[]{1, "test", 56.7, CURRENT}, reader.getRow(event));
     }
+
+    @Test
+    public void testRowType() {
+        Row row = Row.of(1, "test", 56.7, CURRENT);
+        StreamSchema<Row> schema = new StreamSchema<>(new RowTypeInfo(
+                TypeExtractor.createTypeInfo(Integer.class),
+                TypeExtractor.createTypeInfo(String.class),
+                TypeExtractor.createTypeInfo(Double.class),
+                TypeExtractor.createTypeInfo(Long.class)
+        ), "id", "name", "price", "timestamp");
+        StreamSerializer<Row> reader = new StreamSerializer<>(schema);
+        Assert.assertArrayEquals(new Object[]{1, "test", 56.7, CURRENT}, reader.getRow(row));
+    }
+
+    @Test
+    public void testTupleType() {
+        Tuple4 row = Tuple4.of(1, "test", 56.7, CURRENT);
+        StreamSchema<Tuple4> schema = new StreamSchema<>(new TupleTypeInfo<>(
+                TypeExtractor.createTypeInfo(Integer.class),
+                TypeExtractor.createTypeInfo(String.class),
+                TypeExtractor.createTypeInfo(Double.class),
+                TypeExtractor.createTypeInfo(Long.class))
+                , "id", "name", "price", "timestamp");
+        StreamSerializer<Tuple4> reader = new StreamSerializer<>(schema);
+        Assert.assertArrayEquals(new Object[]{1, "test", 56.7, CURRENT}, reader.getRow(row));
+    }
+
+
 }
