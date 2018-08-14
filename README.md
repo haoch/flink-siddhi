@@ -107,9 +107,12 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * Issues: https://github.com/haoch/flink-siddhi/issues
 * Documents: https://github.com/haoch/flink-siddhi/wiki
 
-## Author and Contributors
+## Contributors
 
-* [@haoch](http://github.com/haoch) (hao AT apache DOT org)
+* Hao Chen [@haoch](https://github.com/haoch) (Author, hao AT apache DOT org)
+* Aparup Banerjee [@aparup](https://github.com/aparup)
+* Blues Zheng [@kisimple](https://github.com/kisimple)
+* [@aagupta1](https://github.com/aagupta1)
 
 ## Contribution
 
