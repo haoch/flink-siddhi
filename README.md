@@ -74,7 +74,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
         
         env.execute();
      
-  > For more examples, please see [`org.apache.flink.contrib.siddhi.SiddhiCEPITCase`](https://github.com/haoch/flink-siddhi/blob/master/src/test/java/org/apache/flink/contrib/siddhi/SiddhiCEPITCase.java)
+  > For more examples, please see [`org.apache.flink.contrib.siddhi.SiddhiCEPITCase`](https://github.com/haoch/flink-siddhi/blob/master/core/src/test/java/org/apache/flink/streaming/siddhi/SiddhiCEPITCase.java)
   
 ## Features
 
