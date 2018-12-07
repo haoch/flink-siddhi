@@ -29,6 +29,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
+            <artifactId>flink-json</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-kafka-0.10_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
