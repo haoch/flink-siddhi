@@ -113,6 +113,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * Aparup Banerjee [@aparup](https://github.com/aparup)
 * Blues Zheng [@kisimple](https://github.com/kisimple)
 * [@aagupta1](https://github.com/aagupta1)
+* [@wittyameta](https://github.com/wittyameta)
 
 ## Contribution
 
