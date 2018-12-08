@@ -20,13 +20,13 @@ package org.apache.flink.streaming.siddhi;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
-import org.apache.flink.api.java.typeutils.TypeInfoParser;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.siddhi.control.ControlEvent;
 import org.apache.flink.streaming.siddhi.operator.SiddhiOperatorContext;
@@ -128,7 +128,7 @@ public abstract class SiddhiStream {
         private static class NamedControlStream
             implements MapFunction<ControlEvent, Tuple2<String, Object>>, ResultTypeQueryable {
             private static final TypeInformation<Tuple2<String, Object>> TYPE_INFO =
-                TypeInfoParser.parse("Tuple2<java.lang.String, java.lang.Object>");
+                TypeInformation.of(new TypeHint<Tuple2<String, Object>>(){});
             private final String streamId;
 
             NamedControlStream(String streamId) {

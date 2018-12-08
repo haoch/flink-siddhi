@@ -1,8 +1,9 @@
 package org.apache.flink.streaming.siddhi.control;
 
-import com.fasterxml.jackson.annotation.JsonRawValue;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonRawValue;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ControlMessage{
     private final String type;

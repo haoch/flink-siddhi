@@ -17,12 +17,11 @@
 
 package org.apache.flink.streaming.siddhi.utils;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
-import org.apache.flink.api.java.typeutils.TypeInfoParser;
 import org.wso2.siddhi.core.SiddhiAppRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
@@ -86,20 +85,14 @@ public class SiddhiTypeFactory {
     }
 
     public static <T extends Tuple> TypeInformation<T> getTupleTypeInformation(AbstractDefinition definition) {
-        int tupleSize = definition.getAttributeList().size();
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Tuple").append(tupleSize);
-        stringBuilder.append("<");
-        List<String> attributeTypes = new ArrayList<>();
+        List<TypeInformation> types = new ArrayList<>();
         for (Attribute attribute : definition.getAttributeList()) {
-            attributeTypes.add(getJavaType(attribute.getType()).getName());
+            types.add(TypeInformation.of(getJavaType(attribute.getType())));
         }
-        stringBuilder.append(StringUtils.join(attributeTypes, ","));
-        stringBuilder.append(">");
         try {
-            return TypeInfoParser.parse(stringBuilder.toString());
+            return Types.TUPLE(types.toArray(new TypeInformation[0]));
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Unable to parse " + stringBuilder.toString(), ex);
+            throw new IllegalArgumentException("Unable to parse ", ex);
         }
     }
 
@@ -130,6 +123,6 @@ public class SiddhiTypeFactory {
     }
 
     public static <T> TypeInformation<Tuple2<String, T>> getStreamTupleTypeInformation(TypeInformation<T> typeInformation) {
-        return TypeInfoParser.parse("Tuple2<String," + typeInformation.getTypeClass().getName() + ">");
+        return Types.TUPLE(Types.STRING, typeInformation);
     }
 }
