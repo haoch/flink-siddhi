@@ -17,7 +17,6 @@
 
 package org.apache.flink.streaming.siddhi.utils;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple;
@@ -124,6 +123,6 @@ public class SiddhiTypeFactory {
     }
 
     public static <T> TypeInformation<Tuple2<String, T>> getStreamTupleTypeInformation(TypeInformation<T> typeInformation) {
-        return Types.TUPLE(TypeInformation.of(String.class), typeInformation);
+        return Types.TUPLE(Types.STRING, typeInformation);
     }
 }
