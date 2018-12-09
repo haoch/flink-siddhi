@@ -114,6 +114,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * Blues Zheng [@kisimple](https://github.com/kisimple)
 * [@aagupta1](https://github.com/aagupta1)
 * [@wittyameta](https://github.com/wittyameta)
+* Jinhu Wu [@wujinhu](https://github.com/wujinhu)
 
 ## Contribution
 
