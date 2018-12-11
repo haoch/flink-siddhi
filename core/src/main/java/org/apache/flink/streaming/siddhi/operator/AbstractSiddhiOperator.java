@@ -37,7 +37,7 @@ import org.apache.flink.streaming.siddhi.control.OperationControlEvent;
 import org.apache.flink.streaming.siddhi.exception.UndefinedStreamException;
 import org.apache.flink.streaming.siddhi.control.ControlEventListener;
 import org.apache.flink.streaming.siddhi.control.ControlEvent;
-import org.apache.flink.streaming.siddhi.router.StreamRouterSpec;
+import org.apache.flink.streaming.siddhi.router.StreamRoute;
 import org.apache.flink.streaming.siddhi.schema.StreamSchema;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataInputViewStreamWrapper;
@@ -281,7 +281,7 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
     /**
      * Send input data to siddhi runtime
      */
-    void send(StreamRouterSpec routerSpec, Object[] data, long timestamp) throws InterruptedException {
+    void send(StreamRoute routerSpec, Object[] data, long timestamp) throws InterruptedException {
         for (String executionPlanId : routerSpec.getExecutionPlanIds()) {
             this.siddhiRuntimeHandlers.get(executionPlanId).send(routerSpec.getInputStreamId(), data, timestamp);
         }

@@ -26,31 +26,31 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Each event will carry one {@link StreamRouterSpec},
- * so we will have 1 * n events(n is the different number of {@link StreamRouterSpec}) for each event
+ * Each event will carry one {@link StreamRoute},
+ * so we will have 1 * n events(n is the different number of {@link StreamRoute}) for each event
  */
-public class StreamRouterSpec implements Serializable {
+public class StreamRoute implements Serializable {
     private String inputStreamId;
     private Set<String> executionPlanIds = new HashSet<>();
     private Tuple partitionValues;
 
-    public StreamRouterSpec() {}
+    public StreamRoute() {}
 
-    public StreamRouterSpec(String inputStreamId) {
+    public StreamRoute(String inputStreamId) {
         this.inputStreamId = inputStreamId;
     }
 
-    public StreamRouterSpec(String inputStreamId, String ... executionPlanIds) {
+    public StreamRoute(String inputStreamId, String ... executionPlanIds) {
         this.inputStreamId = inputStreamId;
         this.executionPlanIds = new HashSet<>(Arrays.asList(executionPlanIds));
     }
 
-    public static StreamRouterSpec of(String inputStreamId) {
-        return new StreamRouterSpec(inputStreamId);
+    public static StreamRoute of(String inputStreamId) {
+        return new StreamRoute(inputStreamId);
     }
 
-    public static StreamRouterSpec of(String inputStreamId, String ... executionPlanIds) {
-        return new StreamRouterSpec(inputStreamId, executionPlanIds);
+    public static StreamRoute of(String inputStreamId, String ... executionPlanIds) {
+        return new StreamRoute(inputStreamId, executionPlanIds);
     }
 
     public String getInputStreamId() {

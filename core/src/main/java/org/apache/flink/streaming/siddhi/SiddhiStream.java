@@ -28,9 +28,13 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.transformations.PartitionTransformation;
 import org.apache.flink.streaming.siddhi.control.ControlEvent;
 import org.apache.flink.streaming.siddhi.operator.SiddhiOperatorContext;
-import org.apache.flink.streaming.siddhi.router.StreamRouterSpec;
+import org.apache.flink.streaming.siddhi.router.AddRouteOperator;
+import org.apache.flink.streaming.siddhi.router.DynamicPartitioner;
+import org.apache.flink.streaming.siddhi.router.HashPartitioner;
+import org.apache.flink.streaming.siddhi.router.StreamRoute;
 import org.apache.flink.streaming.siddhi.utils.GenericRecord;
 import org.apache.flink.streaming.siddhi.utils.SiddhiStreamFactory;
 import org.apache.flink.streaming.siddhi.utils.SiddhiTypeFactory;
@@ -68,25 +72,25 @@ public abstract class SiddhiStream {
     /**
      * @return Transform SiddhiStream to physical DataStream
      */
-    protected abstract DataStream<Tuple2<StreamRouterSpec, Object>> toDataStream();
+    protected abstract DataStream<Tuple2<StreamRoute, Object>> toDataStream();
 
     /**
      * Convert DataStream&lt;T&gt; to DataStream&lt;Tuple2&lt;String,T&gt;&gt;.
      * If it's KeyedStream. pass through original keySelector
      */
-    protected <T> DataStream<Tuple2<StreamRouterSpec, Object>> convertDataStream(DataStream<T> dataStream, String streamId) {
+    protected <T> DataStream<Tuple2<StreamRoute, Object>> convertDataStream(DataStream<T> dataStream, String streamId) {
         final String streamIdInClosure = streamId;
-        DataStream<Tuple2<StreamRouterSpec, Object>> resultStream = dataStream.map(new MapFunction<T, Tuple2<StreamRouterSpec, Object>>() {
+        DataStream<Tuple2<StreamRoute, Object>> resultStream = dataStream.map(new MapFunction<T, Tuple2<StreamRoute, Object>>() {
             @Override
-            public Tuple2<StreamRouterSpec, Object> map(T value) throws Exception {
-                return Tuple2.of(StreamRouterSpec.of(streamIdInClosure), (Object) value);
+            public Tuple2<StreamRoute, Object> map(T value) throws Exception {
+                return Tuple2.of(StreamRoute.of(streamIdInClosure), (Object) value);
             }
         });
         if (dataStream instanceof KeyedStream) {
             final KeySelector<T, Object> keySelector = ((KeyedStream<T, Object>) dataStream).getKeySelector();
-            final KeySelector<Tuple2<StreamRouterSpec, Object>, Object> keySelectorInClosure = new KeySelector<Tuple2<StreamRouterSpec, Object>, Object>() {
+            final KeySelector<Tuple2<StreamRoute, Object>, Object> keySelectorInClosure = new KeySelector<Tuple2<StreamRoute, Object>, Object>() {
                 @Override
-                public Object getKey(Tuple2<StreamRouterSpec, Object> value) throws Exception {
+                public Object getKey(Tuple2<StreamRoute, Object> value) throws Exception {
                     return keySelector.getKey((T) value.f1);
                 }
             };
@@ -121,15 +125,25 @@ public abstract class SiddhiStream {
          * @return ExecutionSiddhiStream context
          */
         public ExecutionSiddhiStream cql(DataStream<ControlEvent> controlStream) {
-            return new ExecutionSiddhiStream(controlStream
+            DataStream<Tuple2<StreamRoute, Object>> unionStream = controlStream
                 .map(new NamedControlStream(ControlEvent.DEFAULT_INTERNAL_CONTROL_STREAM))
-                .broadcast().union(this.toDataStream()), null, getCepEnvironment());
+                .broadcast()
+                .union(this.toDataStream())
+                .transform("add route transform",
+                    SiddhiTypeFactory.getStreamTupleTypeInformation(TypeInformation.of(Object.class)),
+                    new AddRouteOperator());
+
+            DataStream<Tuple2<StreamRoute, Object>> partitionedStream = new DataStream<>(
+                unionStream.getExecutionEnvironment(),
+                new PartitionTransformation<>(unionStream.getTransformation(),
+                new DynamicPartitioner()));
+            return new ExecutionSiddhiStream(partitionedStream, null, getCepEnvironment());
         }
 
         private static class NamedControlStream
-            implements MapFunction<ControlEvent, Tuple2<StreamRouterSpec, Object>>, ResultTypeQueryable {
-            private static final TypeInformation<Tuple2<StreamRouterSpec, Object>> TYPE_INFO =
-                TypeInformation.of(new TypeHint<Tuple2<StreamRouterSpec, Object>>(){});
+            implements MapFunction<ControlEvent, Tuple2<StreamRoute, Object>>, ResultTypeQueryable {
+            private static final TypeInformation<Tuple2<StreamRoute, Object>> TYPE_INFO =
+                TypeInformation.of(new TypeHint<Tuple2<StreamRoute, Object>>(){});
             private final String streamId;
 
             NamedControlStream(String streamId) {
@@ -137,8 +151,8 @@ public abstract class SiddhiStream {
             }
 
             @Override
-            public Tuple2<StreamRouterSpec, Object> map(ControlEvent value) throws Exception {
-                return Tuple2.of(StreamRouterSpec.of(this.streamId), value);
+            public Tuple2<StreamRoute, Object> map(ControlEvent value) throws Exception {
+                return Tuple2.of(StreamRoute.of(this.streamId), value);
             }
 
             @Override
@@ -184,7 +198,7 @@ public abstract class SiddhiStream {
         }
 
         @Override
-        protected DataStream<Tuple2<StreamRouterSpec, Object>> toDataStream() {
+        protected DataStream<Tuple2<StreamRoute, Object>> toDataStream() {
             return convertDataStream(getCepEnvironment().getDataStream(this.streamId), this.streamId);
         }
     }
@@ -233,10 +247,10 @@ public abstract class SiddhiStream {
         }
 
         @Override
-        protected DataStream<Tuple2<StreamRouterSpec, Object>> toDataStream() {
+        protected DataStream<Tuple2<StreamRoute, Object>> toDataStream() {
             final String localFirstStreamId = firstStreamId;
             final List<String> localUnionStreamIds = this.unionStreamIds;
-            DataStream<Tuple2<StreamRouterSpec, Object>> dataStream = convertDataStream(getCepEnvironment().<T>getDataStream(localFirstStreamId), this.firstStreamId);
+            DataStream<Tuple2<StreamRoute, Object>> dataStream = convertDataStream(getCepEnvironment().<T>getDataStream(localFirstStreamId), this.firstStreamId);
             for (String unionStreamId : localUnionStreamIds) {
                 dataStream = dataStream.union(convertDataStream(getCepEnvironment().<T>getDataStream(unionStreamId), unionStreamId));
             }
@@ -245,12 +259,12 @@ public abstract class SiddhiStream {
     }
 
     public static class ExecutionSiddhiStream {
-        private final DataStream<Tuple2<StreamRouterSpec, Object>> dataStream;
+        private final DataStream<Tuple2<StreamRoute, Object>> dataStream;
         private final SiddhiCEP environment;
         private final String executionPlan;
         private String executionPlanId;
 
-        public ExecutionSiddhiStream(DataStream<Tuple2<StreamRouterSpec, Object>> dataStream, String executionPlan, SiddhiCEP environment) {
+        public ExecutionSiddhiStream(DataStream<Tuple2<StreamRoute, Object>> dataStream, String executionPlan, SiddhiCEP environment) {
             this.executionPlan = executionPlan;
             this.dataStream = dataStream;
             this.environment = environment;
@@ -330,9 +344,9 @@ public abstract class SiddhiStream {
         }
 
         private <T> DataStream<T> returnsInternal(SiddhiOperatorContext siddhiContext, String executionPlanId) {
-            DataStream<Tuple2<StreamRouterSpec, Object>> mapped = this.dataStream.map(new MapFunction<Tuple2<StreamRouterSpec, Object>, Tuple2<StreamRouterSpec, Object>>() {
+            DataStream<Tuple2<StreamRoute, Object>> mapped = this.dataStream.map(new MapFunction<Tuple2<StreamRoute, Object>, Tuple2<StreamRoute, Object>>() {
                 @Override
-                public Tuple2<StreamRouterSpec, Object> map(Tuple2<StreamRouterSpec, Object> value) throws Exception {
+                public Tuple2<StreamRoute, Object> map(Tuple2<StreamRoute, Object> value) throws Exception {
                     if (executionPlanId != null) {
                         value.f0.addExecutionPlanId(executionPlanId);
                     }

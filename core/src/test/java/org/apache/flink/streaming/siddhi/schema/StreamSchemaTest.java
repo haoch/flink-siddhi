@@ -24,7 +24,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
-import org.apache.flink.streaming.siddhi.source.DataEvent;
+import org.apache.flink.streaming.siddhi.source.Event;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -34,11 +34,11 @@ public class StreamSchemaTest {
 
     @Test
     public void testStreamSchemaWithPojo() {
-        TypeInformation<DataEvent> typeInfo = TypeExtractor.createTypeInfo(DataEvent.class);
+        TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
         assertTrue("Type information should be PojoTypeInfo", typeInfo instanceof PojoTypeInfo);
-        StreamSchema<DataEvent> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
+        StreamSchema<Event> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
         assertEquals(4, schema.getFieldIndexes().length);
-        assertEquals(DataEvent.class, schema.getTypeInfo().getTypeClass());
+        assertEquals(Event.class, schema.getTypeInfo().getTypeClass());
     }
 
     @Test
@@ -61,19 +61,19 @@ public class StreamSchemaTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testStreamSchemaWithPojoAndUnknownField() {
-        TypeInformation<DataEvent> typeInfo = TypeExtractor.createTypeInfo(DataEvent.class);
+        TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
         new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price", "unknown");
     }
 
     @Test
     public void testStreamTupleSerializerWithPojo() {
-        TypeInformation<DataEvent> typeInfo = TypeExtractor.createTypeInfo(DataEvent.class);
+        TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
         assertTrue("Type information should be PojoTypeInfo", typeInfo instanceof PojoTypeInfo);
-        StreamSchema<DataEvent> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
-        assertEquals(DataEvent.class, schema.getTypeInfo().getTypeClass());
+        StreamSchema<Event> schema = new StreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
+        assertEquals(Event.class, schema.getTypeInfo().getTypeClass());
 
-        TypeInformation<Tuple2<String, DataEvent>> tuple2TypeInformation = Types.TUPLE(TypeInformation.of(String.class), schema.getTypeInfo());
-        assertEquals("Java Tuple2<String, PojoType<org.apache.flink.streaming.siddhi.source.DataEvent, fields = [id: Integer, name: String, price: Double, timestamp: Long]>>", tuple2TypeInformation.toString());
+        TypeInformation<Tuple2<String, Event>> tuple2TypeInformation = Types.TUPLE(TypeInformation.of(String.class), schema.getTypeInfo());
+        assertEquals("Java Tuple2<String, PojoType<org.apache.flink.streaming.siddhi.source.Event, fields = [id: Integer, name: String, price: Double, timestamp: Long]>>", tuple2TypeInformation.toString());
     }
 
     @Test

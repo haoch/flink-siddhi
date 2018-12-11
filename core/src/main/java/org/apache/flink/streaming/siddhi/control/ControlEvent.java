@@ -1,10 +1,9 @@
 package org.apache.flink.streaming.siddhi.control;
 
-import org.apache.flink.streaming.siddhi.event.Event;
-
+import java.io.Serializable;
 import java.util.Date;
 
-public abstract class ControlEvent implements Event {
+public abstract class ControlEvent implements Serializable {
     public static final String DEFAULT_INTERNAL_CONTROL_STREAM = "_internal_control_stream";
     private final Date createdTime = new Date();
     private Date expiredTime;
