@@ -25,7 +25,7 @@ import org.apache.flink.api.java.typeutils.TypeExtractor;
 
 import java.util.Objects;
 
-public class Event implements org.apache.flink.streaming.siddhi.event.Event {
+public class Event {
     private long timestamp;
     private String name;
     private double price;

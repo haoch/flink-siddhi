@@ -24,7 +24,6 @@ import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.siddhi.control.ControlEvent;
 import org.apache.flink.streaming.siddhi.control.MetadataControlEvent;
-import org.apache.flink.streaming.siddhi.event.Event;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,7 +37,7 @@ public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute,
 
     @Override
     public void processElement(StreamRecord<Tuple2<StreamRoute, Object>> element) throws Exception {
-        Event value = (Event)element.getValue().f1;
+        Object value = element.getValue().f1;
         if (value instanceof ControlEvent) {
             // control event
             if (value instanceof MetadataControlEvent) {
