@@ -21,13 +21,14 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.siddhi.operator.SiddhiOperatorContext;
 import org.apache.flink.streaming.siddhi.operator.SiddhiStreamOperator;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.siddhi.router.StreamRouterSpec;
 
 /**
  * Convert SiddhiCEPExecutionPlan to SiddhiCEP Operator and build output DataStream
  */
 public class SiddhiStreamFactory {
     @SuppressWarnings("unchecked")
-    public static <OUT> DataStream<OUT> createDataStream(SiddhiOperatorContext context, DataStream<Tuple2<String, Object>> namedStream) {
+    public static <OUT> DataStream<OUT> createDataStream(SiddhiOperatorContext context, DataStream<Tuple2<StreamRouterSpec, Object>> namedStream) {
         return namedStream.transform(context.getName(), context.getOutputStreamType(), new SiddhiStreamOperator(context));
     }
 }

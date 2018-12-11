@@ -34,7 +34,7 @@ import org.apache.flink.streaming.siddhi.control.MetadataControlEvent;
 import org.apache.flink.streaming.siddhi.control.OperationControlEvent;
 import org.apache.flink.streaming.siddhi.exception.UndefinedStreamException;
 import org.apache.flink.streaming.siddhi.extension.CustomPlusFunctionExtension;
-import org.apache.flink.streaming.siddhi.source.Event;
+import org.apache.flink.streaming.siddhi.source.DataEvent;
 import org.apache.flink.streaming.siddhi.source.RandomEventSource;
 import org.apache.flink.streaming.siddhi.source.RandomTupleSource;
 import org.apache.flink.streaming.siddhi.source.RandomWordSource;
@@ -65,20 +65,20 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testSimpleWriteAndRead() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input = env.fromElements(
-            Event.of(1, "start", 1.0),
-            Event.of(2, "middle", 2.0),
-            Event.of(3, "end", 3.0),
-            Event.of(4, "start", 4.0),
-            Event.of(5, "middle", 5.0),
-            Event.of(6, "end", 6.0)
+        DataStream<DataEvent> input = env.fromElements(
+            DataEvent.of(1, "start", 1.0),
+            DataEvent.of(2, "middle", 2.0),
+            DataEvent.of(3, "end", 3.0),
+            DataEvent.of(4, "start", 4.0),
+            DataEvent.of(5, "middle", 5.0),
+            DataEvent.of(6, "end", 6.0)
         );
 
         String path = tempFolder.newFile().toURI().toString();
-        input.transform("transformer", TypeInformation.of(Event.class), new StreamMap<>(new MapFunction<Event, Event>() {
+        input.transform("transformer", TypeInformation.of(DataEvent.class), new StreamMap<>(new MapFunction<DataEvent, DataEvent>() {
             @Override
-            public Event map(Event event) throws Exception {
-                return event;
+            public DataEvent map(DataEvent dataEvent) throws Exception {
+                return dataEvent;
             }
         })).writeAsText(path);
         env.execute();
@@ -88,19 +88,19 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testSimplePojoStreamAndReturnPojo() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input = env.fromElements(
-            Event.of(1, "start", 1.0),
-            Event.of(2, "middle", 2.0),
-            Event.of(3, "end", 3.0),
-            Event.of(4, "start", 4.0),
-            Event.of(5, "middle", 5.0),
-            Event.of(6, "end", 6.0)
+        DataStream<DataEvent> input = env.fromElements(
+            DataEvent.of(1, "start", 1.0),
+            DataEvent.of(2, "middle", 2.0),
+            DataEvent.of(3, "end", 3.0),
+            DataEvent.of(4, "start", 4.0),
+            DataEvent.of(5, "middle", 5.0),
+            DataEvent.of(6, "end", 6.0)
         );
 
-        DataStream<Event> output = SiddhiCEP
+        DataStream<DataEvent> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price")
             .cql("from inputStream insert into  outputStream")
-            .returns("outputStream", Event.class);
+            .returns("outputStream", DataEvent.class);
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
@@ -110,13 +110,13 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testSimplePojoStreamAndReturnRow() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input = env.fromElements(
-            Event.of(1, "start", 1.0),
-            Event.of(2, "middle", 2.0),
-            Event.of(3, "end", 3.0),
-            Event.of(4, "start", 4.0),
-            Event.of(5, "middle", 5.0),
-            Event.of(6, "end", 6.0)
+        DataStream<DataEvent> input = env.fromElements(
+            DataEvent.of(1, "start", 1.0),
+            DataEvent.of(2, "middle", 2.0),
+            DataEvent.of(3, "end", 3.0),
+            DataEvent.of(4, "start", 4.0),
+            DataEvent.of(5, "middle", 5.0),
+            DataEvent.of(6, "end", 6.0)
         );
 
         DataStream<Row> output = SiddhiCEP
@@ -132,7 +132,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testUnboundedPojoSourceAndReturnTuple() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input = env.addSource(new RandomEventSource(5));
+        DataStream<DataEvent> input = env.addSource(new RandomEventSource(5));
 
         DataStream<Tuple4<Long, Integer, String, Double>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
@@ -187,7 +187,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test(expected = InvalidTypesException.class)
     public void testUnboundedPojoSourceButReturnInvalidTupleType() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input = env.addSource(new RandomEventSource(5).closeDelay(1500));
+        DataStream<DataEvent> input = env.addSource(new RandomEventSource(5).closeDelay(1500));
 
         DataStream<Tuple5<Long, Integer, String, Double, Long>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
@@ -213,7 +213,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
         env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
-        DataStream<Event> input = env.addSource(new RandomEventSource(5));
+        DataStream<DataEvent> input = env.addSource(new RandomEventSource(5));
 
         DataStream<Map<String,Object>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
@@ -229,18 +229,18 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testUnboundedPojoStreamAndReturnPojo() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input = env.addSource(new RandomEventSource(5));
-        input.assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Event>() {
+        DataStream<DataEvent> input = env.addSource(new RandomEventSource(5));
+        input.assignTimestampsAndWatermarks(new AscendingTimestampExtractor<DataEvent>() {
             @Override
-            public long extractAscendingTimestamp(Event element) {
+            public long extractAscendingTimestamp(DataEvent element) {
                 return element.getTimestamp();
             }
         });
 
-        DataStream<Event> output = SiddhiCEP
+        DataStream<DataEvent> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
-            .returns("outputStream", Event.class);
+            .returns("outputStream", DataEvent.class);
 
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
@@ -252,10 +252,10 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testMultipleUnboundedPojoStreamSimpleUnion() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(10), "input1");
-        DataStream<Event> input2 = env.addSource(new RandomEventSource(10), "input2");
-        DataStream<Event> input3 = env.addSource(new RandomEventSource(10), "input2");
-        DataStream<Event> output = SiddhiCEP
+        DataStream<DataEvent> input1 = env.addSource(new RandomEventSource(10), "input1");
+        DataStream<DataEvent> input2 = env.addSource(new RandomEventSource(10), "input2");
+        DataStream<DataEvent> input3 = env.addSource(new RandomEventSource(10), "input2");
+        DataStream<DataEvent> output = SiddhiCEP
             .define("inputStream1", input1, "id", "name", "price", "timestamp")
             .union("inputStream2", input2, "id", "name", "price", "timestamp")
             .union("inputStream3", input3, "id", "name", "price", "timestamp")
@@ -264,7 +264,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
                     + "from inputStream2 select timestamp, id, name, price insert into outputStream;"
                     + "from inputStream3 select timestamp, id, name, price insert into outputStream;"
             )
-            .returns("outputStream", Event.class);
+            .returns("outputStream", DataEvent.class);
 
         final String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
@@ -278,8 +278,8 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testMultipleUnboundedPojoStreamUnionAndJoinWithWindow() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(5), "input1");
-        DataStream<Event> input2 = env.addSource(new RandomEventSource(5), "input2");
+        DataStream<DataEvent> input1 = env.addSource(new RandomEventSource(5), "input1");
+        DataStream<DataEvent> input2 = env.addSource(new RandomEventSource(5), "input2");
 
         DataStream<? extends Map> output = SiddhiCEP
             .define("inputStream1", input1.keyBy("id"), "id", "name", "price", "timestamp")
@@ -307,8 +307,8 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(50).closeDelay(1500), "input1");
-        DataStream<Event> input2 = env.addSource(new RandomEventSource(50).closeDelay(1500), "input2");
+        DataStream<DataEvent> input1 = env.addSource(new RandomEventSource(50).closeDelay(1500), "input1");
+        DataStream<DataEvent> input2 = env.addSource(new RandomEventSource(50).closeDelay(1500), "input2");
 
         DataStream<Map<String, Object>> output = SiddhiCEP
             .define("inputStream1", input1.keyBy("name"), "id", "name", "price", "timestamp")
@@ -335,7 +335,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testUnboundedPojoStreamSimpleSequences() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(5).closeDelay(1500), "input1");
+        DataStream<DataEvent> input1 = env.addSource(new RandomEventSource(5).closeDelay(1500), "input1");
         DataStream<Map<String, Object>> output = SiddhiCEP
             .define("inputStream1", input1.keyBy("name"), "id", "name", "price", "timestamp")
             .union("inputStream2", input1.keyBy("name"), "id", "name", "price", "timestamp")
@@ -366,7 +366,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testCustomizeSiddhiFunctionExtension() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input = env.addSource(new RandomEventSource(5));
+        DataStream<DataEvent> input = env.addSource(new RandomEventSource(5));
 
         SiddhiCEP cep = SiddhiCEP.getSiddhiEnvironment(env);
         cep.registerExtension("custom:plus", CustomPlusFunctionExtension.class);
@@ -385,8 +385,8 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test
     public void testRegisterStreamAndExtensionWithSiddhiCEPEnvironment() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(5), "input1");
-        DataStream<Event> input2 = env.addSource(new RandomEventSource(5), "input2");
+        DataStream<DataEvent> input1 = env.addSource(new RandomEventSource(5), "input1");
+        DataStream<DataEvent> input2 = env.addSource(new RandomEventSource(5), "input2");
 
         SiddhiCEP cep = SiddhiCEP.getSiddhiEnvironment(env);
         cep.registerExtension("custom:plus", CustomPlusFunctionExtension.class);
@@ -414,7 +414,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Test(expected = UndefinedStreamException.class)
     public void testTriggerUndefinedStreamException() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(5), "input1");
+        DataStream<DataEvent> input1 = env.addSource(new RandomEventSource(5), "input1");
 
         SiddhiCEP cep = SiddhiCEP.getSiddhiEnvironment(env);
         cep.registerStream("inputStream1", input1.keyBy("id"), "id", "name", "price", "timestamp");
@@ -440,13 +440,13 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(10).setName("event_stream_1"),
+        DataStream<DataEvent> input1 = env.addSource(new RandomEventSource(10).setName("event_stream_1"),
             "input1");
-        DataStream<Event> input2 = env.addSource(new RandomEventSource(10).setName("event_stream_2"),
+        DataStream<DataEvent> input2 = env.addSource(new RandomEventSource(10).setName("event_stream_2"),
             "input2");
-        DataStream<Event> input3 = env.addSource(new RandomEventSource(10).setName("event_stream_3"),
+        DataStream<DataEvent> input3 = env.addSource(new RandomEventSource(10).setName("event_stream_3"),
             "input3");
-        DataStream<Event> input4 = env.addSource(new RandomEventSource(10).setName("event_stream_4"),
+        DataStream<DataEvent> input4 = env.addSource(new RandomEventSource(10).setName("event_stream_4"),
             "input4");
 
         DataStream<ControlEvent> controlStream = env.addSource(new SourceFunction<ControlEvent>() {
@@ -491,8 +491,8 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
 
         String resultPath = tempFolder.newFile().toURI().toString();
 
-        builder.returns("outputStream1", Event.class)
-            .union(builder.returns("outputStream2", Event.class))
+        builder.returns("outputStream1", DataEvent.class)
+            .union(builder.returns("outputStream3", DataEvent.class))
             .writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
         assertTrue(getLineCount(resultPath) > 0);

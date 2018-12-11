@@ -21,7 +21,7 @@ import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
-import org.apache.flink.streaming.siddhi.source.Event;
+import org.apache.flink.streaming.siddhi.source.DataEvent;
 import org.apache.flink.types.Row;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,16 +39,16 @@ public class StreamSerializerTest {
 
     @Test
     public void testPojoType() {
-        Event event = new Event();
-        event.setId(1);
-        event.setName("test");
-        event.setPrice(56.7);
-        event.setTimestamp(CURRENT);
+        DataEvent dataEvent = new DataEvent();
+        dataEvent.setId(1);
+        dataEvent.setName("test");
+        dataEvent.setPrice(56.7);
+        dataEvent.setTimestamp(CURRENT);
 
-        StreamSchema<Event> schema = new StreamSchema<>(TypeExtractor.createTypeInfo(Event.class),
+        StreamSchema<DataEvent> schema = new StreamSchema<>(TypeExtractor.createTypeInfo(DataEvent.class),
                 "id", "name", "price", "timestamp");
-        StreamSerializer<Event> reader = new StreamSerializer<>(schema);
-        Assert.assertArrayEquals(new Object[]{1, "test", 56.7, CURRENT}, reader.getRow(event));
+        StreamSerializer<DataEvent> reader = new StreamSerializer<>(schema);
+        Assert.assertArrayEquals(new Object[]{1, "test", 56.7, CURRENT}, reader.getRow(dataEvent));
     }
 
     @Test

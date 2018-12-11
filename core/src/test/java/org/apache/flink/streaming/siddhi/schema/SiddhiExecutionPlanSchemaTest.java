@@ -20,7 +20,7 @@ package org.apache.flink.streaming.siddhi.schema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
-import org.apache.flink.streaming.siddhi.source.Event;
+import org.apache.flink.streaming.siddhi.source.DataEvent;
 import org.junit.Test;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.definition.StreamDefinition;
@@ -30,10 +30,10 @@ import static org.junit.Assert.*;
 public class SiddhiExecutionPlanSchemaTest {
     @Test
     public void testStreamSchemaWithPojo() {
-        TypeInformation<Event> typeInfo = TypeExtractor.createTypeInfo(Event.class);
+        TypeInformation<DataEvent> typeInfo = TypeExtractor.createTypeInfo(DataEvent.class);
         assertTrue("Type information should be PojoTypeInfo", typeInfo instanceof PojoTypeInfo);
 
-        SiddhiStreamSchema<Event> schema = new SiddhiStreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
+        SiddhiStreamSchema<DataEvent> schema = new SiddhiStreamSchema<>(typeInfo, "id", "timestamp", "name", "price");
         assertEquals(4, schema.getFieldIndexes().length);
 
         StreamDefinition streamDefinition = schema.getStreamDefinition("test_stream");

@@ -22,10 +22,11 @@ import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.streaming.siddhi.event.Event;
 
 import java.util.Objects;
 
-public class Event {
+public class DataEvent implements Event {
     private long timestamp;
     private String name;
     private double price;
@@ -45,13 +46,13 @@ public class Event {
 
     @Override
     public String toString() {
-        return "Event(" + id + ", " + name + ", " + price + ", " + timestamp + ")";
+        return "DataEvent(" + id + ", " + name + ", " + price + ", " + timestamp + ")";
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Event) {
-            Event other = (Event) obj;
+        if (obj instanceof DataEvent) {
+            DataEvent other = (DataEvent) obj;
 
             return name.equals(other.name) && price == other.price && id == other.id && timestamp == other.timestamp;
         } else {
@@ -59,22 +60,22 @@ public class Event {
         }
     }
 
-    public static Event of(int id, String name, double price) {
-        Event event = new Event();
-        event.setId(id);
-        event.setName(name);
-        event.setPrice(price);
-        event.setTimestamp(System.currentTimeMillis());
-        return event;
+    public static DataEvent of(int id, String name, double price) {
+        DataEvent dataEvent = new DataEvent();
+        dataEvent.setId(id);
+        dataEvent.setName(name);
+        dataEvent.setPrice(price);
+        dataEvent.setTimestamp(System.currentTimeMillis());
+        return dataEvent;
     }
 
-    public static Event of(int id, String name, double price, long timestamp) {
-        Event event = new Event();
-        event.setId(id);
-        event.setName(name);
-        event.setPrice(price);
-        event.setTimestamp(timestamp);
-        return event;
+    public static DataEvent of(int id, String name, double price, long timestamp) {
+        DataEvent dataEvent = new DataEvent();
+        dataEvent.setId(id);
+        dataEvent.setName(name);
+        dataEvent.setPrice(price);
+        dataEvent.setTimestamp(timestamp);
+        return dataEvent;
     }
 
     @Override
@@ -82,8 +83,8 @@ public class Event {
         return Objects.hash(name, price, id);
     }
 
-    public static TypeSerializer<Event> createTypeSerializer() {
-        TypeInformation<Event> typeInformation = (TypeInformation<Event>) TypeExtractor.createTypeInfo(Event.class);
+    public static TypeSerializer<DataEvent> createTypeSerializer() {
+        TypeInformation<DataEvent> typeInformation = (TypeInformation<DataEvent>) TypeExtractor.createTypeInfo(DataEvent.class);
 
         return typeInformation.createSerializer(new ExecutionConfig());
     }

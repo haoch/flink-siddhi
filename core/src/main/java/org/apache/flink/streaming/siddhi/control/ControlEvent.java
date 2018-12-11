@@ -1,18 +1,33 @@
 package org.apache.flink.streaming.siddhi.control;
 
-import java.io.Serializable;
+import org.apache.flink.streaming.siddhi.event.Event;
+
 import java.util.Date;
 
-public interface ControlEvent extends Serializable {
-    String DEFAULT_INTERNAL_CONTROL_STREAM = "_internal_control_stream";
+public abstract class ControlEvent implements Event {
+    public static final String DEFAULT_INTERNAL_CONTROL_STREAM = "_internal_control_stream";
+    private final Date createdTime = new Date();
+    private Date expiredTime;
+    private boolean expired;
 
-    String getName();
+    public String getName() {
+        return this.getClass().getSimpleName();
+    }
 
-    Date getCreatedTime();
+    public Date getCreatedTime() {
+        return createdTime;
+    }
 
-    Date getExpiredTime();
+    public Date getExpiredTime() {
+        return expiredTime;
+    }
 
-    boolean isExpired();
+    public boolean isExpired() {
+        return expired;
+    }
 
-    void expire();
+    public void expire() {
+        this.expired = true;
+        this.expiredTime = new Date();
+    }
 }

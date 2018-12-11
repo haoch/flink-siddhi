@@ -22,6 +22,7 @@ import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.streaming.siddhi.router.StreamRouterSpec;
 import org.wso2.siddhi.core.SiddhiAppRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
@@ -122,7 +123,7 @@ public class SiddhiTypeFactory {
         return SIDDHI_TO_JAVA_TYPE.get(attributeType);
     }
 
-    public static <T> TypeInformation<Tuple2<String, T>> getStreamTupleTypeInformation(TypeInformation<T> typeInformation) {
-        return Types.TUPLE(Types.STRING, typeInformation);
+    public static <T> TypeInformation<Tuple2<StreamRouterSpec, T>> getStreamTupleTypeInformation(TypeInformation<T> typeInformation) {
+        return Types.TUPLE(TypeInformation.of(StreamRouterSpec.class), typeInformation);
     }
 }

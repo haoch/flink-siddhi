@@ -4,10 +4,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 
-public class MetadataControlEvent extends AbstractControlEvent {
+public class MetadataControlEvent extends ControlEvent {
     private Map<String, String> updatedExecutionPlanMap;
     private Map<String, String> addedExecutionPlanMap;
     private List<String> deletedExecutionPlanId;

@@ -1,6 +1,6 @@
 package org.apache.flink.streaming.siddhi.control;
 
-public class OperationControlEvent extends AbstractControlEvent {
+public class OperationControlEvent extends ControlEvent {
     private Action action;
     private String queryId;
 
