@@ -272,7 +272,7 @@ public abstract class SiddhiStream {
             siddhiContext.setExtensions(environment.getExtensions());
             siddhiContext.setExecutionConfig(environment.getExecutionEnvironment().getConfig());
             TypeInformation<T> typeInformation =
-                SiddhiTypeFactory.getTupleTypeInformation(siddhiContext.getAllEnrichedExecutionPlan(), outStreamId);
+                SiddhiTypeFactory.getTupleTypeInformation(siddhiContext.getAllEnrichedExecutionPlan(), outStreamId, siddhiContext);
             siddhiContext.setOutputStreamType(typeInformation);
             return returnsInternal(siddhiContext);
         }
