@@ -18,16 +18,10 @@
 package org.apache.flink.streaming.siddhi.router;
 
 import org.apache.flink.api.common.functions.Partitioner;
-import org.apache.flink.api.java.tuple.Tuple;
 
-public class HashPartitioner implements Partitioner<Tuple> {
+public class HashPartitioner implements Partitioner<Long> {
     @Override
-    public int partition(Tuple keys, int numPartitions) {
-        int hashCodes = 0;
-        for (int i = 0; i < keys.getArity(); ++i) {
-            hashCodes += keys.getField(i).hashCode();
-        }
-
-        return hashCodes % numPartitions;
+    public int partition(Long partitionKey, int numPartitions) {
+        return (int)(partitionKey % numPartitions);
     }
 }

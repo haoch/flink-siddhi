@@ -18,19 +18,17 @@
 package org.apache.flink.streaming.siddhi.router;
 
 import org.apache.flink.api.common.functions.Partitioner;
-import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.runtime.plugable.SerializationDelegate;
 import org.apache.flink.streaming.runtime.partitioner.StreamPartitioner;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
-import org.apache.flink.streaming.siddhi.control.ControlEvent;
 
 import java.util.Random;
 
 public class DynamicPartitioner extends StreamPartitioner<Tuple2<StreamRoute, Object>> {
     private final int[] returnChannels = new int[1];
     private Random random = new Random();
-    private Partitioner<Tuple> partitioner;
+    private Partitioner<Long> partitioner;
 
     public DynamicPartitioner() {
         this.partitioner = new HashPartitioner();
@@ -45,20 +43,18 @@ public class DynamicPartitioner extends StreamPartitioner<Tuple2<StreamRoute, Ob
     public int[] selectChannels(SerializationDelegate<StreamRecord<Tuple2<StreamRoute, Object>>> streamRecordSerializationDelegate,
                                 int numberOfOutputChannels) {
         Tuple2<StreamRoute, Object> value = streamRecordSerializationDelegate.getInstance().getValue();
-        if (value.f1 instanceof ControlEvent) {
+        if (value.f0.isBroadCastPartitioning()) {
             // send to all channels
             int[] channels = new int[numberOfOutputChannels];
             for (int i = 0; i < numberOfOutputChannels; ++i) {
                 channels[i] = i;
             }
             return channels;
-        }
-
-        if (value.f0.getPartitionValues().getArity() == 0) {
+        } else if (value.f0.getPartitionKey() == -1) {
             // random partition
             returnChannels[0] = random.nextInt(numberOfOutputChannels);
         } else {
-            returnChannels[0] = partitioner.partition(value.f0.getPartitionValues(), numberOfOutputChannels);
+            returnChannels[0] = partitioner.partition(value.f0.getPartitionKey(), numberOfOutputChannels);
         }
         return returnChannels;
     }

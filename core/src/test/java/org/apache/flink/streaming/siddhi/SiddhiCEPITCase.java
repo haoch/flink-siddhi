@@ -19,6 +19,7 @@ package org.apache.flink.streaming.siddhi;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import org.apache.flink.api.common.functions.InvalidTypesException;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple1;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
@@ -100,7 +102,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Event> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price")
             .cql("from inputStream insert into  outputStream")
-            .returns("outputStream", Event.class);
+            .returns("outputStream", Event.class).map(x -> x.f1);
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
@@ -122,7 +124,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Row> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price")
             .cql("from inputStream insert into  outputStream")
-            .returnAsRow("outputStream");
+            .returnAsRow("outputStream").map(x -> x.f1);
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
@@ -134,15 +136,15 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<Event> input = env.addSource(new RandomEventSource(5));
 
-        DataStream<Tuple4<Long, Integer, String, Double>> output = SiddhiCEP
+        DataStream<Tuple2<String, Tuple4<Long, Integer, String, Double>>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
             .returns("outputStream");
 
-        DataStream<Integer> following = output.map(new MapFunction<Tuple4<Long, Integer, String, Double>, Integer>() {
+        DataStream<Integer> following = output.map(new MapFunction<Tuple2<String, Tuple4<Long, Integer, String, Double>>, Integer>() {
             @Override
-            public Integer map(Tuple4<Long, Integer, String, Double> value) throws Exception {
-                return value.f1;
+            public Integer map(Tuple2<String, Tuple4<Long, Integer, String, Double>> value) throws Exception {
+                return value.f1.f1;
             }
         });
         String resultPath = tempFolder.newFile().toURI().toString();
@@ -157,7 +159,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Tuple4<Integer, String, Double, Long>> input = env
             .addSource(new RandomTupleSource(5).closeDelay(1500)).keyBy(1);
 
-        DataStream<Tuple4<Long, Integer, String, Double>> output = SiddhiCEP
+        DataStream<Tuple2<String, Tuple4<Long, Integer, String, Double>>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
             .returns("outputStream");
@@ -173,7 +175,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> input = env.addSource(new RandomWordSource(5).closeDelay(1500));
 
-        DataStream<Tuple1<String>> output = SiddhiCEP
+        DataStream<Tuple2<String, Tuple1<String>>> output = SiddhiCEP
             .define("wordStream", input, "words")
             .cql("from wordStream select words insert into  outputStream")
             .returns("outputStream");
@@ -192,7 +194,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Tuple5<Long, Integer, String, Double, Long>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
-            .returns("outputStream");
+            .returns("outputStream").map(x -> (Tuple5<Long, Integer, String, Double, Long>)x.f1);
 
         DataStream<Long> following = output.map(new MapFunction<Tuple5<Long, Integer, String, Double, Long>, Long>() {
             @Override
@@ -240,7 +242,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Event> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
-            .returns("outputStream", Event.class);
+            .returns("outputStream", Event.class).map(x -> x.f1);
 
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
@@ -264,7 +266,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
                     + "from inputStream2 select timestamp, id, name, price insert into outputStream;"
                     + "from inputStream3 select timestamp, id, name, price insert into outputStream;"
             )
-            .returns("outputStream", Event.class);
+            .returns("outputStream", Event.class).map(x -> x.f1);
 
         final String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
@@ -394,7 +396,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         cep.registerStream("inputStream1", input1.keyBy("id"), "id", "name", "price", "timestamp");
         cep.registerStream("inputStream2", input2.keyBy("id"), "id", "name", "price", "timestamp");
 
-        DataStream<Tuple4<Long, String, Double, Double>> output = cep
+        DataStream<Tuple2<String, Tuple4<Long, String, Double, Double>>> output = cep
             .from("inputStream1").union("inputStream2")
             .cql(
                 "from inputStream1#window.length(5) as s1 "
@@ -440,13 +442,13 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-        DataStream<Event> input1 = env.addSource(new RandomEventSource(10).setName("event_stream_1"),
+        DataStream<Event> input1 = env.addSource(new RandomEventSource(30).setName("event_stream_1"),
             "input1");
-        DataStream<Event> input2 = env.addSource(new RandomEventSource(10).setName("event_stream_2"),
+        DataStream<Event> input2 = env.addSource(new RandomEventSource(30).setName("event_stream_2"),
             "input2");
-        DataStream<Event> input3 = env.addSource(new RandomEventSource(10).setName("event_stream_3"),
+        DataStream<Event> input3 = env.addSource(new RandomEventSource(30).setName("event_stream_3"),
             "input3");
-        DataStream<Event> input4 = env.addSource(new RandomEventSource(10).setName("event_stream_4"),
+        DataStream<Event> input4 = env.addSource(new RandomEventSource(30).setName("event_stream_4"),
             "input4");
 
         DataStream<ControlEvent> controlStream = env.addSource(new SourceFunction<ControlEvent>() {
@@ -462,18 +464,25 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
                 String id2 = MetadataControlEvent.Builder.nextExecutionPlanId();
                 sourceContext.collect(MetadataControlEvent.builder()
                     .addExecutionPlan(id2,
-                        "from inputStream2 select timestamp, id, name, price insert into outputStream2;")
+                        "from inputStream1 select id, timestamp, name, price group by id insert into outputStream2;")
                     .build());
 
                 String id3 = MetadataControlEvent.Builder.nextExecutionPlanId();
                 sourceContext.collect(MetadataControlEvent.builder()
                     .addExecutionPlan(id3,
-                        "from inputStream3 select timestamp, id, name, price insert into outputStream3;")
+                        "from inputStream1 select name, timestamp, id, price group by name insert into outputStream3;")
+                    .build());
+
+                String id4 = MetadataControlEvent.Builder.nextExecutionPlanId();
+                sourceContext.collect(MetadataControlEvent.builder()
+                    .addExecutionPlan(id4,
+                        "from inputStream2 select timestamp, id, name, price group by name insert into outputStream4;")
                     .build());
 
                 sourceContext.collect(OperationControlEvent.enableQuery(id1));
                 sourceContext.collect(OperationControlEvent.enableQuery(id2));
-                sourceContext.collect(OperationControlEvent.disableQuery(id3));
+                sourceContext.collect(OperationControlEvent.enableQuery(id3));
+                sourceContext.collect(OperationControlEvent.enableQuery(id4));
             }
 
             @Override
@@ -490,12 +499,12 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
             .cql(controlStream);
 
         String resultPath = tempFolder.newFile().toURI().toString();
-
-        builder.returns("outputStream1", Event.class)
-            .union(builder.returns("outputStream3", Event.class))
+        builder.returnAsRow("outputStream2");
+        builder.returnAsRow("outputStream3")
             .writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
-        assertTrue(getLineCount(resultPath) > 0);
-        assertTrue(getLineCount(resultPath) <= 20);
+        int lineCount = getLineCount(resultPath);
+        assertTrue(lineCount > 0);
+        assertTrue(lineCount <= 90);
     }
 }

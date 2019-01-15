@@ -22,6 +22,7 @@ import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -33,7 +34,6 @@ import org.apache.flink.streaming.siddhi.control.ControlEvent;
 import org.apache.flink.streaming.siddhi.operator.SiddhiOperatorContext;
 import org.apache.flink.streaming.siddhi.router.AddRouteOperator;
 import org.apache.flink.streaming.siddhi.router.DynamicPartitioner;
-import org.apache.flink.streaming.siddhi.router.HashPartitioner;
 import org.apache.flink.streaming.siddhi.router.StreamRoute;
 import org.apache.flink.streaming.siddhi.utils.GenericRecord;
 import org.apache.flink.streaming.siddhi.utils.SiddhiStreamFactory;
@@ -131,7 +131,7 @@ public abstract class SiddhiStream {
                 .union(this.toDataStream())
                 .transform("add route transform",
                     SiddhiTypeFactory.getStreamTupleTypeInformation(TypeInformation.of(Object.class)),
-                    new AddRouteOperator());
+                    new AddRouteOperator(getCepEnvironment().getDataStreamSchemas()));
 
             DataStream<Tuple2<StreamRoute, Object>> partitionedStream = new DataStream<>(
                 unionStream.getExecutionEnvironment(),
@@ -260,14 +260,22 @@ public abstract class SiddhiStream {
 
     public static class ExecutionSiddhiStream {
         private final DataStream<Tuple2<StreamRoute, Object>> dataStream;
-        private final SiddhiCEP environment;
-        private final String executionPlan;
+
+        private DataStream createdDataStream;
+
+        private SiddhiOperatorContext siddhiContext;
         private String executionPlanId;
 
         public ExecutionSiddhiStream(DataStream<Tuple2<StreamRoute, Object>> dataStream, String executionPlan, SiddhiCEP environment) {
-            this.executionPlan = executionPlan;
             this.dataStream = dataStream;
-            this.environment = environment;
+            siddhiContext = new SiddhiOperatorContext();
+            if (executionPlan != null) {
+                executionPlanId = siddhiContext.addExecutionPlan(executionPlan);
+            }
+            siddhiContext.setInputStreamSchemas(environment.getDataStreamSchemas());
+            siddhiContext.setTimeCharacteristic(environment.getExecutionEnvironment().getStreamTimeCharacteristic());
+            siddhiContext.setExtensions(environment.getExtensions());
+            siddhiContext.setExecutionConfig(environment.getExecutionEnvironment().getConfig());
         }
 
         /**
@@ -277,20 +285,16 @@ public abstract class SiddhiStream {
          * @return Return output stream as Tuple
          * @see SiddhiTypeFactory
          */
-        public <T extends Tuple> DataStream<T> returns(String outStreamId) {
-            SiddhiOperatorContext siddhiContext = new SiddhiOperatorContext();
-            if (executionPlan != null) {
-                executionPlanId = siddhiContext.addExecutionPlan(executionPlan);
-            }
-            siddhiContext.setInputStreamSchemas(environment.getDataStreamSchemas());
-            siddhiContext.setTimeCharacteristic(environment.getExecutionEnvironment().getStreamTimeCharacteristic());
-            siddhiContext.setOutputStreamId(outStreamId);
-            siddhiContext.setExtensions(environment.getExtensions());
-            siddhiContext.setExecutionConfig(environment.getExecutionEnvironment().getConfig());
+        public <T extends Tuple> DataStream<Tuple2<String, T>> returns(String outStreamId) {
             TypeInformation<T> typeInformation =
                 SiddhiTypeFactory.getTupleTypeInformation(siddhiContext.getAllEnrichedExecutionPlan(), outStreamId);
-            siddhiContext.setOutputStreamType(typeInformation);
-            return returnsInternal(siddhiContext, executionPlanId);
+            siddhiContext.setOutputStreamType(outStreamId, typeInformation);
+            return returnsInternal(siddhiContext, executionPlanId).map(new MapFunction<Tuple2<String, Object>, Tuple2<String, T>>() {
+                @Override
+                public Tuple2<String, T> map(Tuple2<String, Object> value) throws Exception {
+                    return Tuple2.of(value.f0, typeInformation.getTypeClass().cast(value.f1));
+                }
+            }).returns(Types.TUPLE(TypeInformation.of(String.class), typeInformation));
         }
 
         /**
@@ -300,12 +304,18 @@ public abstract class SiddhiStream {
          * @see java.util.LinkedHashMap
          */
         public DataStream<Map<String, Object>> returnAsMap(String outStreamId) {
-            return this.returnsInternal(outStreamId, SiddhiTypeFactory.getMapTypeInformation())
-                .map((MapFunction<GenericRecord, Map<String, Object>>) GenericRecord::getMap);
+            siddhiContext.setOutputStreamType(outStreamId, SiddhiTypeFactory.getMapTypeInformation());
+            return this.returnsInternal().map(new MapFunction<Tuple2<String, Object>, Map<String, Object>>() {
+                @Override
+                public Map<String, Object> map(Tuple2<String, Object> value) throws Exception {
+                    return ((GenericRecord)value.f1).getMap();
+                }
+            });
         }
 
-        public DataStream<Row> returnAsRow(String outStreamId) {
-            return this.returnsInternal(outStreamId, TypeExtractor.createTypeInfo(Row.class));
+        public DataStream<Tuple2<String, Row>> returnAsRow(String outStreamId) {
+            siddhiContext.setOutputStreamType(outStreamId, TypeExtractor.createTypeInfo(Row.class));
+            return this.returnsInternal();
         }
 
         /**
@@ -314,9 +324,10 @@ public abstract class SiddhiStream {
          * @param <T>         Output type
          * @return Return output stream as POJO class.
          */
-        public <T> DataStream<T> returns(String outStreamId, Class<T> outType) {
+        public <T> DataStream<Tuple2<String, T>> returns(String outStreamId, Class<T> outType) {
             TypeInformation<T> typeInformation = TypeExtractor.getForClass(outType);
-            return returnsInternal(outStreamId, typeInformation);
+            siddhiContext.setOutputStreamType(outStreamId, typeInformation);
+            return returnsInternal();
         }
 
         /**
@@ -324,36 +335,31 @@ public abstract class SiddhiStream {
          * @param <T>         Output type
          * @return Return output stream as POJO class.
          */
-        public <T> DataStream<T> returns(String outStreamId, TypeInformation<T> typeInformation) {
-            return returnsInternal(outStreamId, typeInformation);
+        public <T> DataStream<Tuple2<String, T>> returns(String outStreamId, TypeInformation<T> typeInformation) {
+            siddhiContext.setOutputStreamType(outStreamId, typeInformation);
+            return returnsInternal();
         }
 
         @VisibleForTesting
-        <T> DataStream<T> returnsInternal(String outStreamId, TypeInformation<T> typeInformation) {
-            SiddhiOperatorContext siddhiContext = new SiddhiOperatorContext();
-            if (executionPlan != null) {
-                executionPlanId = siddhiContext.addExecutionPlan(executionPlan);
-            }
-            siddhiContext.setInputStreamSchemas(environment.getDataStreamSchemas());
-            siddhiContext.setTimeCharacteristic(environment.getExecutionEnvironment().getStreamTimeCharacteristic());
-            siddhiContext.setOutputStreamId(outStreamId);
-            siddhiContext.setOutputStreamType(typeInformation);
-            siddhiContext.setExtensions(environment.getExtensions());
-            siddhiContext.setExecutionConfig(environment.getExecutionEnvironment().getConfig());
+        <T> DataStream<Tuple2<String, T>> returnsInternal() {
             return returnsInternal(siddhiContext, executionPlanId);
         }
 
-        private <T> DataStream<T> returnsInternal(SiddhiOperatorContext siddhiContext, String executionPlanId) {
-            DataStream<Tuple2<StreamRoute, Object>> mapped = this.dataStream.map(new MapFunction<Tuple2<StreamRoute, Object>, Tuple2<StreamRoute, Object>>() {
-                @Override
-                public Tuple2<StreamRoute, Object> map(Tuple2<StreamRoute, Object> value) throws Exception {
-                    if (executionPlanId != null) {
-                        value.f0.addExecutionPlanId(executionPlanId);
+        private <T> DataStream<Tuple2<String, T>> returnsInternal(SiddhiOperatorContext siddhiContext, String executionPlanId) {
+            if (createdDataStream == null) {
+                DataStream<Tuple2<StreamRoute, Object>> mapped = this.dataStream.map(new MapFunction<Tuple2<StreamRoute, Object>, Tuple2<StreamRoute, Object>>() {
+                    @Override
+                    public Tuple2<StreamRoute, Object> map(Tuple2<StreamRoute, Object> value) throws Exception {
+                        if (executionPlanId != null) {
+                            value.f0.addExecutionPlanId(executionPlanId);
+                        }
+                        return value;
                     }
-                    return value;
-                }
-            });
-            return SiddhiStreamFactory.createDataStream(siddhiContext, mapped);
+                });
+                createdDataStream = SiddhiStreamFactory.createDataStream(siddhiContext, mapped);
+            }
+
+            return createdDataStream;
         }
     }
 }

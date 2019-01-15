@@ -22,6 +22,7 @@ import java.util.TreeMap;
 
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.DeserializationFeature;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,12 +44,14 @@ import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 public class StreamOutputHandler<R> extends StreamCallback {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamOutputHandler.class);
 
+    private String outputStreamId;
     private final AbstractDefinition definition;
     private final Output<StreamRecord<R>> output;
     private final TypeInformation<R> typeInfo;
     private final ObjectMapper objectMapper;
 
-    public StreamOutputHandler(TypeInformation<R> typeInfo, AbstractDefinition definition, Output<StreamRecord<R>> output) {
+    public StreamOutputHandler(String outputStreamId, TypeInformation<R> typeInfo, AbstractDefinition definition, Output<StreamRecord<R>> output) {
+        this.outputStreamId = outputStreamId;
         this.typeInfo = typeInfo;
         this.definition = definition;
         this.output = output;
@@ -63,14 +66,14 @@ public class StreamOutputHandler<R> extends StreamCallback {
             if (typeInfo == null
                 || (Map.class.isAssignableFrom(typeInfo.getTypeClass())
                 || GenericRecord.class.isAssignableFrom(typeInfo.getTypeClass()))) {
-                reusableRecord.replace(new GenericRecord(buildMap(event)), event.getTimestamp());
+                reusableRecord.replace(Tuple2.of(outputStreamId, new GenericRecord(buildMap(event))), event.getTimestamp());
                 output.collect(reusableRecord);
             } else if (Row.class.isAssignableFrom(typeInfo.getTypeClass())) {
-                reusableRecord.replace(buildRow(event), event.getTimestamp());
+                reusableRecord.replace(Tuple2.of(outputStreamId, buildRow(event)), event.getTimestamp());
                 output.collect(reusableRecord);
             } else if (typeInfo.isTupleType()) {
                 Tuple tuple = this.toTuple(event);
-                reusableRecord.replace(tuple, event.getTimestamp());
+                reusableRecord.replace(Tuple2.of(outputStreamId, tuple), event.getTimestamp());
                 output.collect(reusableRecord);
             } else if (typeInfo instanceof PojoTypeInfo) {
                 R obj;
@@ -80,7 +83,7 @@ public class StreamOutputHandler<R> extends StreamCallback {
                     LOGGER.error("Failed to map event: " + event + " into type: " + typeInfo, ex);
                     throw ex;
                 }
-                reusableRecord.replace(obj, event.getTimestamp());
+                reusableRecord.replace(Tuple2.of(outputStreamId, obj), event.getTimestamp());
                 output.collect(reusableRecord);
             } else {
                 throw new IllegalArgumentException("Unable to format " + event + " as type " + typeInfo);

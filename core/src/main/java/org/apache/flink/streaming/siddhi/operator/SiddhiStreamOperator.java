@@ -34,7 +34,7 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamElementSerializer;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 
 /**
- * Wrap input event in generic type of <code>IN</code> as Tuple2<String,IN>
+ * Wrap input event in generic type of <code>IN</code> as Tuple2<StreamRoute,IN>
  */
 public class SiddhiStreamOperator<IN, OUT> extends AbstractSiddhiOperator<Tuple2<StreamRoute, IN>, OUT> {
 
@@ -79,9 +79,9 @@ public class SiddhiStreamOperator<IN, OUT> extends AbstractSiddhiOperator<Tuple2
     }
 
     @Override
-    protected PriorityQueue<StreamRecord<Tuple2<StreamRoute, IN>>> restoreQueuerState(DataInputView dataInputView) throws IOException {
+    protected PriorityQueue<StreamRecord<Tuple2<StreamRoute, IN>>> restoreQueueState(DataInputView dataInputView) throws IOException {
         int sizeOfQueue = dataInputView.readInt();
-        PriorityQueue<StreamRecord<Tuple2<StreamRoute, IN>>> priorityQueue = new PriorityQueue<>(sizeOfQueue);
+        PriorityQueue<StreamRecord<Tuple2<StreamRoute, IN>>> priorityQueue = new PriorityQueue<>(sizeOfQueue + 1);
         for (int i = 0; i < sizeOfQueue; i++) {
             String streamId = dataInputView.readUTF();
             StreamElement streamElement = getStreamRecordSerializer(streamId).deserialize(dataInputView);

@@ -17,9 +17,6 @@
 
 package org.apache.flink.streaming.siddhi.router;
 
-
-import org.apache.flink.api.java.tuple.Tuple;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -32,7 +29,8 @@ import java.util.Set;
 public class StreamRoute implements Serializable {
     private String inputStreamId;
     private Set<String> executionPlanIds = new HashSet<>();
-    private Tuple partitionValues;
+    private long partitionKey;
+    private boolean broadCastPartitioning = false;
 
     public StreamRoute() {}
 
@@ -69,15 +67,23 @@ public class StreamRoute implements Serializable {
         this.executionPlanIds = executionPlanIds;
     }
 
-    public Tuple getPartitionValues() {
-        return partitionValues;
+    public long getPartitionKey() {
+        return partitionKey;
     }
 
-    public void setPartitionValues(Tuple partitionValues) {
-        this.partitionValues = partitionValues;
+    public void setPartitionKey(long partitionKey) {
+        this.partitionKey = partitionKey;
     }
 
     public void addExecutionPlanId(String executionPlanId) {
         this.executionPlanIds.add(executionPlanId);
+    }
+
+    public boolean isBroadCastPartitioning() {
+        return broadCastPartitioning;
+    }
+
+    public void setBroadCastPartitioning(boolean broadCastPartitioning) {
+        this.broadCastPartitioning = broadCastPartitioning;
     }
 }
