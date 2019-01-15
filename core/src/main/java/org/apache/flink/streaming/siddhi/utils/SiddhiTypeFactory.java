@@ -23,16 +23,14 @@ import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.streaming.siddhi.router.StreamRoute;
+import org.apache.flink.streaming.siddhi.operator.SiddhiOperatorContext;
 import org.wso2.siddhi.core.SiddhiAppRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.definition.StreamDefinition;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Siddhi Type Utils for conversion between Java Type, Siddhi Field Type, Stream Definition, and Flink Type Information.
@@ -85,6 +83,34 @@ public class SiddhiTypeFactory {
         }
     }
 
+    public static AbstractDefinition getStreamDefinition(String executionPlan, String streamId, SiddhiOperatorContext siddhiOperatorContext) {
+        SiddhiManager siddhiManager = null;
+        SiddhiAppRuntime runtime = null;
+        try {
+            siddhiManager = new SiddhiManager();
+            Map extensions = siddhiOperatorContext.getExtensions();
+            Iterator<Map.Entry<String,Class<?>>> iterator = extensions.entrySet().iterator();
+            while(iterator.hasNext()){
+                Map.Entry<String,Class<?>> entry = iterator.next();
+                siddhiManager.setExtension(entry.getKey(), entry.getValue());
+            }
+            runtime = siddhiManager.createSiddhiAppRuntime(executionPlan);
+            Map<String, StreamDefinition> definitionMap = runtime.getStreamDefinitionMap();
+            if (definitionMap.containsKey(streamId)) {
+                return definitionMap.get(streamId);
+            } else {
+                throw new IllegalArgumentException("Unknown stream id" + streamId);
+            }
+        } finally {
+            if (runtime != null) {
+                runtime.shutdown();
+            }
+            if (siddhiManager != null) {
+                siddhiManager.shutdown();
+            }
+        }
+    }
+
     public static <T extends Tuple> TypeInformation<T> getTupleTypeInformation(AbstractDefinition definition) {
         List<TypeInformation> types = new ArrayList<>();
         for (Attribute attribute : definition.getAttributeList()) {
@@ -99,6 +125,10 @@ public class SiddhiTypeFactory {
 
     public static <T extends Tuple> TypeInformation<T> getTupleTypeInformation(String executionPlan, String streamId) {
         return getTupleTypeInformation(getStreamDefinition(executionPlan, streamId));
+    }
+
+    public static <T extends Tuple> TypeInformation<T> getTupleTypeInformation(String executionPlan, String streamId, SiddhiOperatorContext siddhiOperatorContext) {
+        return getTupleTypeInformation(getStreamDefinition(executionPlan, streamId,siddhiOperatorContext));
     }
 
     @SuppressWarnings("unchecked")
