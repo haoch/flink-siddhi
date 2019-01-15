@@ -57,8 +57,8 @@ public class RandomEventSource implements SourceFunction<Event> {
         while (isRunning) {
             Thread.sleep(200);
             long timestamp = initialTimestamp + 1000 * number.get();
-            ctx.collectWithTimestamp(Event.of(number.get() % 6,
-                (this.name == null ? "test_event" : this.name) + "_" + random.nextInt(3), random.nextDouble(), timestamp), timestamp);
+            ctx.collectWithTimestamp(Event.of(number.get() % 50,
+                (this.name == null ? "test_event" : this.name), random.nextDouble(), timestamp), timestamp);
             if (number.incrementAndGet() >= this.count) {
                 cancel();
             }
