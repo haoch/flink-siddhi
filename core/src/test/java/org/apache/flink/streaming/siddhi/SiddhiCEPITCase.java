@@ -395,7 +395,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         cep.registerStream("inputStream1", input1.keyBy("id"), "id", "name", "price", "timestamp");
         cep.registerStream("inputStream2", input2.keyBy("id"), "id", "name", "price", "timestamp");
 
-        DataStream<Tuple2<String, Tuple4<Long, String, Double, Double>>> output = cep
+        DataStream<Tuple4<Long, String, Double, Double>> output = cep
             .from("inputStream1").union("inputStream2")
             .cql(
                 "from inputStream1#window.length(5) as s1 "
