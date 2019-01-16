@@ -42,10 +42,7 @@ import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Siddhi CEP Stream API.
@@ -288,26 +285,25 @@ public abstract class SiddhiStream {
         public <T extends Tuple> DataStream<T> returns(String outStreamId) {
             TypeInformation<T> typeInformation =
                 SiddhiTypeFactory.getTupleTypeInformation(siddhiContext.getAllEnrichedExecutionPlan(), outStreamId);
-            return get(outStreamId).map(value -> typeInformation.getTypeClass().cast(value.f1)).returns(typeInformation);
+            return returns(Collections.singletonList(outStreamId)).map(value -> typeInformation.getTypeClass().cast(value.f1)).returns(typeInformation);
         }
 
         /**
-         * @param outStreamId The <code>streamId</code> to return as data stream.
-         * @param <T>         Type information should match with stream definition.
-         *                    During execution phase, it will automatically build type information based on stream definition.
+         * @apiNote This function could not be used by dynamic partition, because policies are loaded dynamically
+         * @param outStreamIds The <code>streamIds</code> to return as data stream.
+         * @param <T>          Type information should match with stream definition.
+         *                     During execution phase, it will automatically build type information based on stream definition.
          * @return Return output stream id and data as Tuple2
          * @see SiddhiTypeFactory
          */
-        public <T extends Tuple> DataStream<Tuple2<String, T>> get(String outStreamId) {
-            TypeInformation<T> typeInformation =
-                SiddhiTypeFactory.getTupleTypeInformation(siddhiContext.getAllEnrichedExecutionPlan(), outStreamId);
-            siddhiContext.setOutputStreamType(outStreamId, typeInformation);
-            return returnsInternal(siddhiContext, executionPlanId).map(new MapFunction<Tuple2<String, Object>, Tuple2<String, T>>() {
-                @Override
-                public Tuple2<String, T> map(Tuple2<String, Object> value) throws Exception {
-                    return Tuple2.of(value.f0, typeInformation.getTypeClass().cast(value.f1));
-                }
-            }).returns(Types.TUPLE(TypeInformation.of(String.class), typeInformation));
+        public <T extends Tuple> DataStream<Tuple2<String, T>> returns(List<String> outStreamIds) {
+            for (String outStreamId : outStreamIds) {
+                TypeInformation<T> typeInformation =
+                    SiddhiTypeFactory.getTupleTypeInformation(siddhiContext.getAllEnrichedExecutionPlan(), outStreamId);
+                siddhiContext.setOutputStreamType(outStreamId, typeInformation);
+            }
+
+            return returnsInternal(siddhiContext, executionPlanId);
         }
 
         /**
@@ -317,7 +313,7 @@ public abstract class SiddhiStream {
          * @see java.util.LinkedHashMap
          */
         public DataStream<Map<String, Object>> returnAsMap(String outStreamId) {
-            return getAsMap(outStreamId).map(new MapFunction<Tuple2<String, Map<String, Object>>, Map<String, Object>>() {
+            return returnAsMap(Collections.singletonList(outStreamId)).map(new MapFunction<Tuple2<String, Map<String, Object>>, Map<String, Object>>() {
                 @Override
                 public Map<String, Object> map(Tuple2<String, Map<String, Object>> value) throws Exception {
                     return value.f1;
@@ -326,11 +322,14 @@ public abstract class SiddhiStream {
         }
 
         /**
-         * @param outStreamId The <code>streamId</code> to return as data stream.
+         * @param outStreamIds The <code>streamId</code> to return as data stream.
          * @return Return output stream id and data(as map) as Tuple2
          */
-        public DataStream<Tuple2<String, Map<String, Object>>> getAsMap(String outStreamId) {
-            siddhiContext.setOutputStreamType(outStreamId, SiddhiTypeFactory.getMapTypeInformation());
+        public DataStream<Tuple2<String, Map<String, Object>>> returnAsMap(List<String> outStreamIds) {
+            for (String outStreamId : outStreamIds) {
+                siddhiContext.setOutputStreamType(outStreamId, SiddhiTypeFactory.getMapTypeInformation());
+            }
+
             return this.returnsInternal().map(new MapFunction<Tuple2<String, Object>, Tuple2<String, Map<String, Object>>>() {
                 @Override
                 public Tuple2<String, Map<String, Object>> map(Tuple2<String, Object> value) throws Exception {
@@ -340,15 +339,17 @@ public abstract class SiddhiStream {
         }
 
         public DataStream<Row> returnAsRow(String outStreamId) {
-            return getAsRow(outStreamId).map(x -> x.f1);
+            return returnAsRow(Collections.singletonList(outStreamId)).map(x -> x.f1);
         }
 
         /**
-         * @param outStreamId The <code>streamId</code> to return as data stream.
+         * @param outStreamIds The <code>streamId</code> to return as data stream.
          * @return Return output stream id and {@link Row} as Tuple2
          */
-        public DataStream<Tuple2<String, Row>> getAsRow(String outStreamId) {
-            siddhiContext.setOutputStreamType(outStreamId, TypeExtractor.createTypeInfo(Row.class));
+        public DataStream<Tuple2<String, Row>> returnAsRow(List<String> outStreamIds) {
+            for (String outStreamId : outStreamIds) {
+                siddhiContext.setOutputStreamType(outStreamId, TypeExtractor.createTypeInfo(Row.class));
+            }
             return this.returnsInternal();
         }
 
@@ -359,18 +360,20 @@ public abstract class SiddhiStream {
          * @return Return output stream as POJO class.
          */
         public <T> DataStream<T> returns(String outStreamId, Class<T> outType) {
-            return get(outStreamId, outType).map(x -> x.f1);
+            return returns(Collections.singletonList(outStreamId), outType).map(x -> x.f1);
         }
 
         /**
-         * @param outStreamId OutStreamId
+         * @param outStreamIds OutStreamId
          * @param outType     Output type class
          * @param <T>         Output type
          * @return Return output stream id and data(POJO class) as Tuple2
          */
-        public <T> DataStream<Tuple2<String, T>> get(String outStreamId, Class<T> outType) {
-            TypeInformation<T> typeInformation = TypeExtractor.getForClass(outType);
-            siddhiContext.setOutputStreamType(outStreamId, typeInformation);
+        public <T> DataStream<Tuple2<String, T>> returns(List<String> outStreamIds, Class<T> outType) {
+            for (String outStreamId : outStreamIds) {
+                TypeInformation<T> typeInformation = TypeExtractor.getForClass(outType);
+                siddhiContext.setOutputStreamType(outStreamId, typeInformation);
+            }
             return returnsInternal();
         }
 
@@ -380,17 +383,19 @@ public abstract class SiddhiStream {
          * @return Return output stream as POJO class.
          */
         public <T> DataStream<T> returns(String outStreamId, TypeInformation<T> typeInformation) {
-            return get(outStreamId, typeInformation).map(x -> x.f1);
+            return returns(Collections.singletonList(outStreamId), typeInformation).map(x -> x.f1);
         }
 
         /**
-         * @param outStreamId       OutStreamId
+         * @param outStreamIds       OutStreamId
          * @param typeInformation   Output type class
          * @param <T>               Output type
          * @return Return output stream id and data(POJO class) as Tuple2
          */
-        public <T> DataStream<Tuple2<String, T>> get(String outStreamId, TypeInformation<T> typeInformation) {
-            siddhiContext.setOutputStreamType(outStreamId, typeInformation);
+        public <T> DataStream<Tuple2<String, T>> returns(List<String> outStreamIds, TypeInformation<T> typeInformation) {
+            for (String outStreamId : outStreamIds) {
+                siddhiContext.setOutputStreamType(outStreamId, typeInformation);
+            }
             return returnsInternal();
         }
 

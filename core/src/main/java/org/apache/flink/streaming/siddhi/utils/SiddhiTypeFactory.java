@@ -71,7 +71,7 @@ public class SiddhiTypeFactory {
             if (definitionMap.containsKey(streamId)) {
                 return definitionMap.get(streamId);
             } else {
-                throw new IllegalArgumentException("Unknown stream id" + streamId);
+                throw new IllegalArgumentException("Unknown stream id " + streamId);
             }
         } finally {
             if (runtime != null) {

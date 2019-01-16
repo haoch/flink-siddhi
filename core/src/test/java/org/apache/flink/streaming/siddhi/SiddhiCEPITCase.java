@@ -19,6 +19,7 @@ package org.apache.flink.streaming.siddhi;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -498,8 +499,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
             .cql(controlStream);
 
         String resultPath = tempFolder.newFile().toURI().toString();
-        builder.returnAsRow("outputStream2");
-        builder.returnAsRow("outputStream3")
+        builder.returnAsRow(Arrays.asList("outputStream2", "outputStream3"))
             .writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
         int lineCount = getLineCount(resultPath);
