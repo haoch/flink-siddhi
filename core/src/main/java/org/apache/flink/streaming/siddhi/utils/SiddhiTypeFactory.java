@@ -22,6 +22,7 @@ import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.streaming.siddhi.router.StreamRoute;
 import org.apache.flink.streaming.siddhi.operator.SiddhiOperatorContext;
 import org.wso2.siddhi.core.SiddhiAppRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
@@ -70,7 +71,7 @@ public class SiddhiTypeFactory {
             if (definitionMap.containsKey(streamId)) {
                 return definitionMap.get(streamId);
             } else {
-                throw new IllegalArgumentException("Unknown stream id" + streamId);
+                throw new IllegalArgumentException("Unknown stream id " + streamId);
             }
         } finally {
             if (runtime != null) {
@@ -152,7 +153,7 @@ public class SiddhiTypeFactory {
         return SIDDHI_TO_JAVA_TYPE.get(attributeType);
     }
 
-    public static <T> TypeInformation<Tuple2<String, T>> getStreamTupleTypeInformation(TypeInformation<T> typeInformation) {
-        return Types.TUPLE(Types.STRING, typeInformation);
+    public static <T> TypeInformation<Tuple2<StreamRoute, T>> getStreamTupleTypeInformation(TypeInformation<T> typeInformation) {
+        return Types.TUPLE(TypeInformation.of(StreamRoute.class), typeInformation);
     }
 }

@@ -20,10 +20,7 @@ package org.apache.flink.streaming.siddhi.operator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,6 +34,7 @@ import org.apache.flink.streaming.siddhi.control.OperationControlEvent;
 import org.apache.flink.streaming.siddhi.exception.UndefinedStreamException;
 import org.apache.flink.streaming.siddhi.control.ControlEventListener;
 import org.apache.flink.streaming.siddhi.control.ControlEvent;
+import org.apache.flink.streaming.siddhi.router.StreamRoute;
 import org.apache.flink.streaming.siddhi.schema.StreamSchema;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataInputViewStreamWrapper;
@@ -159,12 +157,14 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 
         @SuppressWarnings("unchecked")
         private void registerInputAndOutput() {
-            AbstractDefinition definition = this.siddhiRuntime.getStreamDefinitionMap()
-                .get(siddhiPlan.getOutputStreamId());
             Map<String, StreamDefinition> streamDefinitionMap = siddhiRuntime.getStreamDefinitionMap();
-            if (streamDefinitionMap.containsKey(siddhiPlan.getOutputStreamId())) {
-                siddhiRuntime.addCallback(siddhiPlan.getOutputStreamId(),
-                    new StreamOutputHandler<>(siddhiPlan.getOutputStreamType(), definition, output));
+
+            for (String outputStreamId : siddhiPlan.getOutputStreamTypes().keySet()) {
+                AbstractDefinition definition = this.siddhiRuntime.getStreamDefinitionMap().get(outputStreamId);
+                if (streamDefinitionMap.containsKey(outputStreamId)) {
+                    siddhiRuntime.addCallback(outputStreamId,
+                        new StreamOutputHandler<>(outputStreamId, siddhiPlan.getOutputStreamType(outputStreamId), definition, output));
+                }
             }
 
             for (String inputStreamId : siddhiPlan.getInputStreams()) {
@@ -280,9 +280,9 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
     /**
      * Send input data to siddhi runtime
      */
-    void send(String streamId, Object[] data, long timestamp) throws InterruptedException {
-        for(QueryRuntimeHandler handler : this.siddhiRuntimeHandlers.values()) {
-            handler.send(streamId, data, timestamp);
+    void send(StreamRoute streamRoute, Object[] data, long timestamp) throws InterruptedException {
+        for (String executionPlanId : streamRoute.getExecutionPlanIds()) {
+            this.siddhiRuntimeHandlers.get(executionPlanId).send(streamRoute.getInputStreamId(), data, timestamp);
         }
     }
 
@@ -347,7 +347,7 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
             final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(queueState.next());
             final DataInputViewStreamWrapper dataInputView = new DataInputViewStreamWrapper(byteArrayInputStream);
             try {
-                this.priorityQueue = restoreQueuerState(dataInputView);
+                this.priorityQueue = restoreQueueState(dataInputView);
             } finally {
                 dataInputView.close();
                 byteArrayInputStream.close();
@@ -394,7 +394,7 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 
     protected abstract void snapshotQueueState(PriorityQueue<StreamRecord<IN>> queue, DataOutputView dataOutputView) throws IOException;
 
-    protected abstract PriorityQueue<StreamRecord<IN>> restoreQueuerState(DataInputView dataInputView) throws IOException;
+    protected abstract PriorityQueue<StreamRecord<IN>> restoreQueueState(DataInputView dataInputView) throws IOException;
 
     @Override
     public void onEventReceived(ControlEvent event) {

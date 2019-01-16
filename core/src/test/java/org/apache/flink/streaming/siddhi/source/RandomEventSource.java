@@ -55,9 +55,10 @@ public class RandomEventSource implements SourceFunction<Event> {
     @Override
     public void run(SourceContext<Event> ctx) throws Exception {
         while (isRunning) {
+            Thread.sleep(200);
             long timestamp = initialTimestamp + 1000 * number.get();
-            ctx.collectWithTimestamp(Event.of(number.get(),
-                this.name == null ? "test_event" : this.name, random.nextDouble(), timestamp), timestamp);
+            ctx.collectWithTimestamp(Event.of(number.get() % 50,
+                (this.name == null ? "test_event" : this.name), random.nextDouble(), timestamp), timestamp);
             if (number.incrementAndGet() >= this.count) {
                 cancel();
             }
