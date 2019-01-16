@@ -158,7 +158,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Tuple4<Integer, String, Double, Long>> input = env
             .addSource(new RandomTupleSource(5).closeDelay(1500)).keyBy(1);
 
-        DataStream<Tuple2<String, Tuple4<Long, Integer, String, Double>>> output = SiddhiCEP
+        DataStream<Tuple4<Long, Integer, String, Double>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
             .returns("outputStream");
@@ -174,7 +174,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> input = env.addSource(new RandomWordSource(5).closeDelay(1500));
 
-        DataStream<Tuple2<String, Tuple1<String>>> output = SiddhiCEP
+        DataStream<Tuple1<String>> output = SiddhiCEP
             .define("wordStream", input, "words")
             .cql("from wordStream select words insert into  outputStream")
             .returns("outputStream");
