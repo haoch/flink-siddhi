@@ -19,7 +19,6 @@ package org.apache.flink.streaming.siddhi;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +101,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Event> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price")
             .cql("from inputStream insert into  outputStream")
-            .returns("outputStream", Event.class).map(x -> x.f1);
+            .returns("outputStream", Event.class);
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
@@ -124,7 +123,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Row> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price")
             .cql("from inputStream insert into  outputStream")
-            .returnAsRow("outputStream").map(x -> x.f1);
+            .returnAsRow("outputStream");
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
         env.execute();
@@ -136,15 +135,15 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<Event> input = env.addSource(new RandomEventSource(5));
 
-        DataStream<Tuple2<String, Tuple4<Long, Integer, String, Double>>> output = SiddhiCEP
+        DataStream<Tuple4<Long, Integer, String, Double>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
             .returns("outputStream");
 
-        DataStream<Integer> following = output.map(new MapFunction<Tuple2<String, Tuple4<Long, Integer, String, Double>>, Integer>() {
+        DataStream<Integer> following = output.map(new MapFunction<Tuple4<Long, Integer, String, Double>, Integer>() {
             @Override
-            public Integer map(Tuple2<String, Tuple4<Long, Integer, String, Double>> value) throws Exception {
-                return value.f1.f1;
+            public Integer map(Tuple4<Long, Integer, String, Double> value) throws Exception {
+                return value.f1;
             }
         });
         String resultPath = tempFolder.newFile().toURI().toString();
@@ -194,7 +193,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Tuple5<Long, Integer, String, Double, Long>> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
-            .returns("outputStream").map(x -> (Tuple5<Long, Integer, String, Double, Long>)x.f1);
+            .returns("outputStream");
 
         DataStream<Long> following = output.map(new MapFunction<Tuple5<Long, Integer, String, Double, Long>, Long>() {
             @Override
@@ -242,7 +241,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
         DataStream<Event> output = SiddhiCEP
             .define("inputStream", input, "id", "name", "price", "timestamp")
             .cql("from inputStream select timestamp, id, name, price insert into  outputStream")
-            .returns("outputStream", Event.class).map(x -> x.f1);
+            .returns("outputStream", Event.class);
 
         String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
@@ -266,7 +265,7 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
                     + "from inputStream2 select timestamp, id, name, price insert into outputStream;"
                     + "from inputStream3 select timestamp, id, name, price insert into outputStream;"
             )
-            .returns("outputStream", Event.class).map(x -> x.f1);
+            .returns("outputStream", Event.class);
 
         final String resultPath = tempFolder.newFile().toURI().toString();
         output.writeAsText(resultPath, FileSystem.WriteMode.OVERWRITE);
