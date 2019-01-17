@@ -6,8 +6,6 @@ flink-siddhi
 
 > A light-weight library to run [Siddhi CEP](https://github.com/wso2/siddhi) within [Apache Flink](https://github.com/apache/flink) streaming application.
 
-__Version:`0.1.3-SNAPSHOT`__
-
 ## About
 
 Siddhi CEP is a lightweight and easy-to-use Open Source Complex Event Processing Engine (CEP) released as a Java Library under `Apache Software License v2.0`. 
@@ -42,7 +40,7 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
                 <dependency>
                         <groupId>com.github.haoch</groupId>
                         <artifactId>flink-siddhi_2.11</artifactId>
-                        <version>0.1.3-SNAPSHOT</version>
+                        <version>LATEST</version>
                 </dependency>
         </dependencies>
         
@@ -115,6 +113,8 @@ This project is mainly to provide a light-weight library to easily run Siddhi CE
 * [@aagupta1](https://github.com/aagupta1)
 * [@wittyameta](https://github.com/wittyameta)
 * Jinhu Wu [@wujinhu](https://github.com/wujinhu)
+* Pi Jing [@tammypi](https://github.com/tammypi)
+* Jayant Ameta [@wittyameta](https://github.com/wittyameta)
 
 ## Contribution
 
