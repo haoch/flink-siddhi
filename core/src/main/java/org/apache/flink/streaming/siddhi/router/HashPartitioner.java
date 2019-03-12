@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.flink.streaming.siddhi.control;
+package org.apache.flink.streaming.siddhi.router;
 
-import java.util.EventListener;
+import org.apache.flink.api.common.functions.Partitioner;
 
-public interface ControlEventListener extends EventListener {
-    void onEventReceived(ControlEvent event);
+public class HashPartitioner implements Partitioner<Long> {
+    @Override
+    public int partition(Long partitionKey, int numPartitions) {
+        return (int)(partitionKey % numPartitions);
+    }
 }

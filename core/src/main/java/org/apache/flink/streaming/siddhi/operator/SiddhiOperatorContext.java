@@ -23,6 +23,7 @@ import org.apache.flink.streaming.siddhi.exception.UndefinedStreamException;
 import org.apache.flink.streaming.siddhi.schema.SiddhiStreamSchema;
 import org.apache.flink.streaming.siddhi.schema.StreamSchema;
 import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.siddhi.utils.SiddhiExecutionPlanner;
 import org.apache.flink.util.Preconditions;
 import org.wso2.siddhi.core.SiddhiManager;
 
@@ -42,8 +43,7 @@ public class SiddhiOperatorContext implements Serializable {
     private ExecutionConfig executionConfig;
     private Map<String, SiddhiStreamSchema<?>> inputStreamSchemas;
     private final Map<String, Class<?>> siddhiExtensions;
-    private String outputStreamId;
-    private TypeInformation outputStreamType;
+    private Map<String, TypeInformation> outputStreamTypes = new HashMap<>();
     private TimeCharacteristic timeCharacteristic;
     private String name;
     private String uuid = UUID.randomUUID().toString();
@@ -123,26 +123,18 @@ public class SiddhiOperatorContext implements Serializable {
      */
     public String getEnrichedExecutionPlan(String id) {
         Preconditions.checkNotNull(executionPlanMap, "Execution plan is not set");
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, SiddhiStreamSchema<?>> entry : inputStreamSchemas.entrySet()) {
-            sb.append(entry.getValue().getStreamDefinitionExpression(entry.getKey()));
-        }
-        sb.append(this.getExecutionPlanMap().get(id));
-        return sb.toString();
+        return SiddhiExecutionPlanner.of(inputStreamSchemas, this.getExecutionPlanMap().get(id)).getEnrichedExecutionPlan();
     }
 
     /**
      * @return Siddhi Stream Operator output type information
      */
-    public TypeInformation getOutputStreamType() {
-        return outputStreamType;
+    public TypeInformation getOutputStreamType(String outputStreamId) {
+        return outputStreamTypes.get(outputStreamId);
     }
 
-    /**
-     * @return Siddhi output streamId for callback
-     */
-    public String getOutputStreamId() {
-        return outputStreamId;
+    public Map<String, TypeInformation> getOutputStreamTypes() {
+        return outputStreamTypes;
     }
 
     /**
@@ -162,19 +154,12 @@ public class SiddhiOperatorContext implements Serializable {
     }
 
     /**
-     * @param outputStreamId Siddhi output streamId, which must exist in siddhi execution plan
-     */
-    public void setOutputStreamId(String outputStreamId) {
-        Preconditions.checkNotNull(outputStreamId,"outputStreamId");
-        this.outputStreamId = outputStreamId;
-    }
-
-    /**
      * @param outputStreamType Output stream TypeInformation
      */
-    public void setOutputStreamType(TypeInformation outputStreamType) {
+    public void setOutputStreamType(String outputStreamId, TypeInformation outputStreamType) {
+        Preconditions.checkNotNull(outputStreamId,"outputStreamId");
         Preconditions.checkNotNull(outputStreamType,"outputStreamType");
-        this.outputStreamType = outputStreamType;
+        this.outputStreamTypes.put(outputStreamId, outputStreamType);
     }
 
     /**
