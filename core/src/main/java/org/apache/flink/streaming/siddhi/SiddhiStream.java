@@ -41,6 +41,8 @@ import org.apache.flink.streaming.siddhi.utils.SiddhiTypeFactory;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
+import org.wso2.siddhi.query.api.definition.AbstractDefinition;
+import org.wso2.siddhi.query.api.definition.Attribute;
 
 import java.util.*;
 
@@ -304,6 +306,17 @@ public abstract class SiddhiStream {
             }
 
             return returnsInternal(siddhiContext, executionPlanId);
+        }
+
+        public DataStream<org.apache.flink.types.Row> returnsTransformRow(String outStreamId){
+            AbstractDefinition definition = SiddhiTypeFactory.getStreamDefinition(siddhiContext.getAllEnrichedExecutionPlan(), outStreamId, siddhiContext);
+            List<TypeInformation> types = new ArrayList<>();
+            for (Attribute attribute : definition.getAttributeList()) {
+                types.add(TypeInformation.of(SiddhiTypeFactory.getJavaType(attribute.getType())));
+            }
+            TypeInformation<org.apache.flink.types.Row> typeInformation =
+                    Types.ROW(types.toArray(new TypeInformation[0]));
+            return returnAsRow(Collections.singletonList(outStreamId)).map(x -> typeInformation.getTypeClass().cast(x.f1)).returns(typeInformation);
         }
 
         /**
