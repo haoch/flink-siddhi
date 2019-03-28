@@ -64,6 +64,31 @@ public class SiddhiCEPITCase extends AbstractTestBase implements Serializable {
     @Rule
     public transient TemporaryFolder tempFolder = new TemporaryFolder();
 
+    @org.junit.Test
+    public void testReturnsTransformRow() throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStream<Event> input = env.addSource(new RandomEventSource(5));
+
+        SiddhiCEP cep = SiddhiCEP.getSiddhiEnvironment(env);
+        SiddhiStream.SingleSiddhiStream stream = cep
+                .define("inputStream", input, "id", "name", "price", "timestamp");
+
+        DataStream output = stream
+                .cql("from inputStream select timestamp, id, name, price,id as s1,id as s2,id as s3,id as s4,id as s5,id as s6," +
+                        "id as s7,id as s8,id as s9,id as s10,id as s11,id as s12,id as s13,id as s14,id as s15,id as s16," +
+                        "id as s17,id as s18,id as s19,id as s20,id as s21,id as s22,id as s23,id as s24,id as s25 insert into  test_stream")
+                .returnsTransformRow("test_stream");
+        cep.registerStream("test_stream", output, "timestamp", "id", "name", "price", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13",
+                "s14", "s15", "s16", "s17", "s18", "s19", "s20", "s21", "s22", "s23", "s24", "s25");
+        stream = cep.from("test_stream");
+
+        DataStream output2 = stream.cql("from test_stream select timestamp, id, name, price insert into  outstream2")
+                .returnAsRow("outstream2");
+        output2.print();
+
+        env.execute();
+    }
+
     @Test
     public void testSimpleWriteAndRead() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
