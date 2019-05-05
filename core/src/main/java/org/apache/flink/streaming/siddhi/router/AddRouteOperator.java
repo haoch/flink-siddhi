@@ -27,12 +27,7 @@ import org.apache.flink.streaming.siddhi.control.OperationControlEvent;
 import org.apache.flink.streaming.siddhi.schema.SiddhiStreamSchema;
 import org.apache.flink.streaming.siddhi.utils.SiddhiExecutionPlanner;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute, Object>>
@@ -100,10 +95,12 @@ public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute,
     private void handleMetadataControlEvent(MetadataControlEvent event) throws Exception {
         if (event.getDeletedExecutionPlanId() != null) {
             for (String executionPlanId : event.getDeletedExecutionPlanId()) {
-                for (String inputStreamId : inputStreamToExecutionPlans.keySet()) {
+                for (Iterator<Map.Entry<String, Set<String>>> it = inputStreamToExecutionPlans.entrySet().iterator(); it.hasNext();) {
+                    Map.Entry<String, Set<String>> entry = it.next();
+                    String inputStreamId = entry.getKey();
                     inputStreamToExecutionPlans.get(inputStreamId).remove(executionPlanId);
                     if (inputStreamToExecutionPlans.get(inputStreamId).isEmpty()) {
-                        inputStreamToExecutionPlans.remove(inputStreamId);
+                        it.remove();
                     }
                 }
                 executionPlanIdToPartitionKeys.remove(executionPlanId);
