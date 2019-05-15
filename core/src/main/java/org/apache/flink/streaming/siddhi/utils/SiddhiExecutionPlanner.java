@@ -97,7 +97,17 @@ public class SiddhiExecutionPlanner {
                 retrievePartition(findStreamPartition((SingleInputStream) inputStream, selector));
             } else {
                 if (inputStream instanceof JoinInputStream) {
-                    throw new Exception("Join is not supported now!");
+                    SingleInputStream leftSingleInputStream = (SingleInputStream) ((JoinInputStream) inputStream)
+                            .getLeftInputStream();
+                    
+                    retrieveAliasForQuery(leftSingleInputStream, queryLevelAliasToStreamMapping);
+                    retrievePartition(findStreamPartition(leftSingleInputStream, selector));
+                    
+                    SingleInputStream rightSingleInputStream = (SingleInputStream) ((JoinInputStream) inputStream)
+                            .getRightInputStream();
+                  
+                    retrieveAliasForQuery(rightSingleInputStream, queryLevelAliasToStreamMapping);
+                    retrievePartition(findStreamPartition(rightSingleInputStream, selector));
                 } else if (inputStream instanceof StateInputStream) {
                     // Group By Spec
                     List<Variable> groupBy = selector.getGroupByList();
