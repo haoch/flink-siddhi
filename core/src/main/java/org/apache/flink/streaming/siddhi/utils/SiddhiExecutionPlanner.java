@@ -149,7 +149,7 @@ public class SiddhiExecutionPlanner {
             }
 
             // Output streams
-            OutputStream outputStream = ((Query) executionElement).getOutputStream();
+            OutputStream outputStream = query.getOutputStream();
             outputStreams.put(outputStream.getId(), selector.getSelectionList());
         }
 
