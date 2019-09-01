@@ -34,7 +34,7 @@ under the License.
     <packaging>pom</packaging>
 
     <properties>
-        <siddhi.version>4.2.40</siddhi.version>
+        <siddhi.version>5.1.2</siddhi.version>
         <flink.version>1.7.0</flink.version>
         <scala.binary.version>2.11</scala.binary.version>
     </properties>
@@ -42,7 +42,7 @@ under the License.
     <dependencies>
         <!-- core dependencies -->
         <dependency>
-            <groupId>org.wso2.siddhi</groupId>
+            <groupId>io.siddhi</groupId>
             <artifactId>siddhi-core</artifactId>
             <version>${siddhi.version}</version>
             <exclusions>
@@ -53,7 +53,7 @@ under the License.
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.wso2.siddhi</groupId>
+            <groupId>io.siddhi</groupId>
             <artifactId>siddhi-query-api</artifactId>
             <version>${siddhi.version}</version>
             <exclusions>
@@ -140,6 +140,16 @@ under the License.
             <id>wso2-maven2-repository</id>
             <name>WSO2 Maven2 Repository</name>
             <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
+        </repository>
+        <repository>
+            <id>wso2.releases</id>
+            <name>WSO2 internal Repository</name>
+            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
         </repository>
     </repositories>
     <pluginRepositories>

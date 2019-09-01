@@ -25,7 +25,7 @@ import org.apache.flink.streaming.siddhi.schema.StreamSchema;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.siddhi.utils.SiddhiExecutionPlanner;
 import org.apache.flink.util.Preconditions;
-import org.wso2.siddhi.core.SiddhiManager;
+import io.siddhi.core.SiddhiManager;
 
 import java.io.Serializable;
 import java.util.ArrayList;

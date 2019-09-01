@@ -41,8 +41,8 @@ import org.apache.flink.streaming.siddhi.utils.SiddhiTypeFactory;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
-import org.wso2.siddhi.query.api.definition.AbstractDefinition;
-import org.wso2.siddhi.query.api.definition.Attribute;
+import io.siddhi.query.api.definition.AbstractDefinition;
+import io.siddhi.query.api.definition.Attribute;
 
 import java.util.*;
 

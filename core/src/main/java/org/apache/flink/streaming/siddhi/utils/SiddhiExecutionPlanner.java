@@ -17,26 +17,27 @@
 
 package org.apache.flink.streaming.siddhi.utils;
 
+import io.siddhi.query.api.SiddhiApp;
+import io.siddhi.query.api.definition.StreamDefinition;
+import io.siddhi.query.api.execution.ExecutionElement;
+import io.siddhi.query.api.execution.partition.Partition;
+import io.siddhi.query.api.execution.query.Query;
+import io.siddhi.query.api.execution.query.input.handler.StreamHandler;
+import io.siddhi.query.api.execution.query.input.handler.Window;
+import io.siddhi.query.api.execution.query.input.stream.InputStream;
+import io.siddhi.query.api.execution.query.input.stream.JoinInputStream;
+import io.siddhi.query.api.execution.query.input.stream.SingleInputStream;
+import io.siddhi.query.api.execution.query.input.stream.StateInputStream;
+import io.siddhi.query.api.execution.query.output.stream.OutputStream;
+import io.siddhi.query.api.execution.query.selection.OutputAttribute;
+import io.siddhi.query.api.execution.query.selection.Selector;
+import io.siddhi.query.api.expression.Variable;
+import io.siddhi.query.compiler.SiddhiCompiler;
 import org.apache.commons.collections.ListUtils;
 import org.apache.flink.streaming.siddhi.schema.SiddhiStreamSchema;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.siddhi.query.api.SiddhiApp;
-import org.wso2.siddhi.query.api.definition.StreamDefinition;
-import org.wso2.siddhi.query.api.execution.ExecutionElement;
-import org.wso2.siddhi.query.api.execution.query.Query;
-import org.wso2.siddhi.query.api.execution.query.input.handler.StreamHandler;
-import org.wso2.siddhi.query.api.execution.query.input.handler.Window;
-import org.wso2.siddhi.query.api.execution.query.input.stream.InputStream;
-import org.wso2.siddhi.query.api.execution.query.input.stream.JoinInputStream;
-import org.wso2.siddhi.query.api.execution.query.input.stream.SingleInputStream;
-import org.wso2.siddhi.query.api.execution.query.input.stream.StateInputStream;
-import org.wso2.siddhi.query.api.execution.query.output.stream.OutputStream;
-import org.wso2.siddhi.query.api.execution.query.selection.OutputAttribute;
-import org.wso2.siddhi.query.api.execution.query.selection.Selector;
-import org.wso2.siddhi.query.api.expression.Variable;
-import org.wso2.siddhi.query.compiler.SiddhiCompiler;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,13 +75,18 @@ public class SiddhiExecutionPlanner {
 
     private void parse() throws Exception {
         SiddhiApp siddhiApp = SiddhiCompiler.parse(enrichedExecutionPlan);
+        Query query;
         for (ExecutionElement executionElement : siddhiApp.getExecutionElementList()) {
-            if (!(executionElement instanceof Query)) {
-               throw new Exception("Unhandled execution element: " + executionElement.toString());
-            }
 
-            InputStream inputStream = ((Query) executionElement).getInputStream();
-            Selector selector = ((Query) executionElement).getSelector();
+            //--FIX START Support for Partition Execution element
+            if (executionElement instanceof Query) {
+               query = (Query) executionElement;
+            }else{
+               query = ((Partition) executionElement).getQueryList().get(0);
+            }
+            //--FIX END
+            InputStream inputStream = query.getInputStream();
+            Selector selector = query.getSelector();
             Map<String, SingleInputStream> queryLevelAliasToStreamMapping = new HashMap<>();
 
             // Inputs stream definitions
