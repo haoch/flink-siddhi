@@ -53,11 +53,11 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.runtime.tasks.StreamTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.siddhi.core.SiddhiAppRuntime;
-import org.wso2.siddhi.core.SiddhiManager;
-import org.wso2.siddhi.core.stream.input.InputHandler;
-import org.wso2.siddhi.query.api.definition.AbstractDefinition;
-import org.wso2.siddhi.query.api.definition.StreamDefinition;
+import io.siddhi.core.SiddhiAppRuntime;
+import io.siddhi.core.SiddhiManager;
+import io.siddhi.core.stream.input.InputHandler;
+import io.siddhi.query.api.definition.AbstractDefinition;
+import io.siddhi.query.api.definition.StreamDefinition;
 
 /**
  * <h1>Siddhi Runtime Operator</h1>
@@ -66,13 +66,13 @@ import org.wso2.siddhi.query.api.definition.StreamDefinition;
  *
  * <ul>
  * <li>
- * Create Siddhi {@link org.wso2.siddhi.core.SiddhiAppRuntime} according predefined execution plan and integrate with Flink Stream Operator lifecycle.
+ * Create Siddhi {@link io.siddhi.core.SiddhiAppRuntime} according predefined execution plan and integrate with Flink Stream Operator lifecycle.
  * </li>
  * <li>
  * Connect Flink DataStreams with predefined Siddhi Stream according to unique streamId
  * </li>
  * <li>
- * Convert native {@link StreamRecord} to Siddhi {@link org.wso2.siddhi.core.event.Event} according to {@link StreamSchema}, and send to Siddhi Runtime.
+ * Convert native {@link StreamRecord} to Siddhi {@link io.siddhi.core.event.Event} according to {@link StreamSchema}, and send to Siddhi Runtime.
  * </li>
  * <li>
  * Listen output callback event and convert as expected output type according to output {@link org.apache.flink.api.common.typeinfo.TypeInformation}, then output as typed DataStream.

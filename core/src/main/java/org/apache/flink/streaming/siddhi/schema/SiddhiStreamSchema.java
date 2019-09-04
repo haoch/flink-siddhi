@@ -21,8 +21,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.siddhi.utils.SiddhiTypeFactory;
 import org.apache.flink.util.Preconditions;
-import org.wso2.siddhi.query.api.definition.Attribute;
-import org.wso2.siddhi.query.api.definition.StreamDefinition;
+import io.siddhi.query.api.definition.Attribute;
+import io.siddhi.query.api.definition.StreamDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
