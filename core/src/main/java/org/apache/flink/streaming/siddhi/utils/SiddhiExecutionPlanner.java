@@ -87,7 +87,7 @@ public class SiddhiExecutionPlanner {
             }else{
                 Partition partition = (Partition) executionElement;
                 Map<String, PartitionType> partitionTypeMap = partition.getPartitionTypeMap();
-                query = ((Partition) executionElement).getQueryList().get(0);
+                query = partition.getQueryList().get(0);
                 for(Map.Entry<String, PartitionType> partitionType : partitionTypeMap.entrySet()){
                     if(partitionType.getValue() instanceof ValuePartitionType){
                         retrievePartition(findStreamPartition(partitionType.getKey(),(ValuePartitionType) partitionType.getValue()));
