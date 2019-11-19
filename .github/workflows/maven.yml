@@ -17,4 +17,4 @@ jobs:
       run: mvn package --file pom.xml
     
     - name: Deploy with Maven
-      run: cd core/ && mvn deploy -Dregistry=https://maven.pkg.github.com/haoch -Dtoken=${{secrets.GITHUB_PKG_TOKEN}}
+      run: cd core/ && mvn deploy

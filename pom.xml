@@ -210,11 +210,10 @@ under the License.
     </build>
 
     <distributionManagement>
-        <!--Deploy to clojars repository by: mvn deploy -DskipTests -->
         <repository>
-            <id>clojars</id>
-            <name>Clojars repository</name>
-            <url>https://clojars.org/repo</url>
+            <id>github</id>
+            <name>GitHub OWNER Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/haoch/flink-siddhi</url>
         </repository>
     </distributionManagement>
 </project>
