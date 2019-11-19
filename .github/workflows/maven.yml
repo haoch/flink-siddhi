@@ -17,4 +17,6 @@ jobs:
       run: mvn package --file pom.xml
     
     - name: Deploy with Maven
+      env:
+        GIHUB_TOKEN: ${{secrets.GITHUB_PKG_TOKEN}} 
       run: cd core/ && mvn deploy
