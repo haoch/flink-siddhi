@@ -40,22 +40,13 @@ public class DynamicPartitioner extends StreamPartitioner<Tuple2<StreamRoute, Ob
     }
 
     @Override
-    public int[] selectChannels(SerializationDelegate<StreamRecord<Tuple2<StreamRoute, Object>>> streamRecordSerializationDelegate,
-                                int numberOfOutputChannels) {
+    public int selectChannel(SerializationDelegate<StreamRecord<Tuple2<StreamRoute, Object>>> streamRecordSerializationDelegate) {
         Tuple2<StreamRoute, Object> value = streamRecordSerializationDelegate.getInstance().getValue();
-        if (value.f0.isBroadCastPartitioning()) {
-            // send to all channels
-            int[] channels = new int[numberOfOutputChannels];
-            for (int i = 0; i < numberOfOutputChannels; ++i) {
-                channels[i] = i;
-            }
-            return channels;
-        } else if (value.f0.getPartitionKey() == -1) {
+        if (value.f0.getPartitionKey() == -1) {
             // random partition
-            returnChannels[0] = random.nextInt(numberOfOutputChannels);
+            return random.nextInt(numberOfChannels);
         } else {
-            returnChannels[0] = partitioner.partition(value.f0.getPartitionKey(), numberOfOutputChannels);
+            return partitioner.partition(value.f0.getPartitionKey(), numberOfChannels);
         }
-        return returnChannels;
     }
 }
