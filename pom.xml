@@ -169,28 +169,19 @@ under the License.
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>2.8.1</version>
-                    <configuration>
-                        <skip>true</skip>
-                    </configuration>
+                    <version>2.8.2</version>
                     <executions>
                         <execution>
+                            <id>default-deploy</id>
                             <phase>deploy</phase>
-                            <configuration>
-                                <packaging>jar</packaging>
-                                <generatePom>true</generatePom>
-                                <url>https://clojars.org/repo</url>
-                                <repositoryId>clojars</repositoryId>
-                                <artifactId>${project.artifactId}</artifactId>
-                                <groupId>${project.groupId}</groupId>
-                                <version>${project.version}</version>
-                                <file>${project.build.directory}/${project.build.finalName}.jar</file>
-                            </configuration>
                             <goals>
-                                <goal>deploy-file</goal>
+                                <goal>deploy</goal>
                             </goals>
+                            <!-- skip默认deploy插件的执行 -->
+                            <!--<configuration>
+                                <skip>true</skip>
+                            </configuration>-->
                         </execution>
                     </executions>
                 </plugin>
@@ -208,11 +199,25 @@ under the License.
         </plugins>
     </build>
 
-    <distributionManagement>
+    <!--<distributionManagement>
+        &lt;!&ndash;Deploy to clojars repository by: mvn deploy -DskipTests &ndash;&gt;
         <repository>
             <id>clojars</id>
             <name>Clojars repository</name>
             <url>https://clojars.org/repo</url>
         </repository>
+    </distributionManagement>-->
+    <distributionManagement>
+        <!--Deploy to clojars repository by: mvn deploy -DskipTests -->
+        <repository>
+            <id>nexus-releases</id>
+            <name>Nexus Release Repository</name>
+            <url>http://10.143.132.59:8081/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus-snapshots</id>
+            <name>Nexus Snapshot Repository</name>
+            <url>http://10.143.132.59:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
     </distributionManagement>
 </project>
