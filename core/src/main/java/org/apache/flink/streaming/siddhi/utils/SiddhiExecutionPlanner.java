@@ -64,8 +64,19 @@ public class SiddhiExecutionPlanner {
         for (Map.Entry<String, SiddhiStreamSchema<?>> entry : dataStreamSchemas.entrySet()) {
             sb.append(entry.getValue().getStreamDefinitionExpression(entry.getKey()));
         }
-        sb.append(executionPlan);
-        enrichedExecutionPlan = sb.toString();
+        
+        int queryStart = executionPlan.toLowerCase().indexOf("@query");
+        if (queryStart == -1) {
+        	queryStart = executionPlan.toLowerCase().indexOf("@info");
+        	if (queryStart == -1) {
+        		queryStart = executionPlan.toLowerCase().indexOf("from ");
+        	}	
+        }
+        
+        String prefix = executionPlan.substring(0, queryStart);
+        String postfix = executionPlan.substring(queryStart);
+        
+        enrichedExecutionPlan = prefix + "\r\n" + sb.toString() + "\r\n" + postfix;
     }
 
     public static SiddhiExecutionPlanner of(Map<String, SiddhiStreamSchema<?>> dataStreamSchemas, String executionPlan) {
