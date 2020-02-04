@@ -169,8 +169,14 @@ public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute,
                 executionPlanIdToPartitionKeys.put(executionPlanId, new ArrayList<>());
             }
             inputStreamToExecutionPlans.get(inputStreamId).add(executionPlanId);
-            executionPlanIdToPartitionKeys.get(executionPlanId).addAll(
-                streamPartitions.get(inputStreamId).getGroupByList());
+
+            if(streamPartitions.get(inputStreamId).getPartitonWithList().isEmpty()){
+                executionPlanIdToPartitionKeys.get(executionPlanId).addAll(
+                        streamPartitions.get(inputStreamId).getGroupByList());
+            }else{
+                executionPlanIdToPartitionKeys.get(executionPlanId).addAll(
+                        streamPartitions.get(inputStreamId).getPartitonWithList());
+            }
         }
     }
 }

@@ -10,7 +10,8 @@ import org.apache.flink.streaming.api.scala.{DataStream => ScalaStream}
 import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer010, FlinkKafkaProducer010}
 import org.apache.flink.streaming.siddhi.SiddhiCEP
 import org.apache.flink.streaming.siddhi.control.ControlEventSchema
-import org.apache.flink.streaming.util.serialization.{JsonRowDeserializationSchema, SimpleStringSchema}
+import org.apache.flink.streaming.util.serialization.SimpleStringSchema
+import org.apache.flink.formats.json.JsonRowDeserializationSchema
 
 import java.util
 

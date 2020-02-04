@@ -25,7 +25,7 @@ under the License.
     <groupId>com.github.haoch</groupId>
     <artifactId>flink-siddhi-parent_2.11</artifactId>
 
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.2.2-SNAPSHOT</version>
     <modules>
         <module>core</module>
         <module>experimental</module>
@@ -35,7 +35,7 @@ under the License.
 
     <properties>
         <siddhi.version>5.1.2</siddhi.version>
-        <flink.version>1.7.0</flink.version>
+        <flink.version>1.9.0</flink.version>
         <scala.binary.version>2.11</scala.binary.version>
     </properties>
 
@@ -117,7 +117,7 @@ under the License.
             <id>central</id>
             <!-- This should be at top, it makes maven try the central repo first and then others and hence faster dep resolution -->
             <name>Maven Repository</name>
-            <url>http://central.maven.org/maven2</url>
+            <url>https://repo1.maven.org/maven2</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -194,7 +194,6 @@ under the License.
                         </execution>
                     </executions>
                 </plugin>
-
             </plugins>
         </pluginManagement>
         <plugins>
@@ -210,7 +209,6 @@ under the License.
     </build>
 
     <distributionManagement>
-        <!--Deploy to clojars repository by: mvn deploy -DskipTests -->
         <repository>
             <id>clojars</id>
             <name>Clojars repository</name>
