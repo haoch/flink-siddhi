@@ -25,9 +25,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.siddhi.core.exception.CannotRestoreSiddhiAppStateException;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.base.array.BytePrimitiveArraySerializer;
 import org.apache.flink.streaming.siddhi.control.MetadataControlEvent;
 import org.apache.flink.streaming.siddhi.control.OperationControlEvent;
@@ -96,6 +99,7 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
     private static final int INITIAL_PRIORITY_QUEUE_CAPACITY = 11;
     private static final String SIDDHI_RUNTIME_STATE_NAME = "siddhiRuntimeState";
     private static final String QUEUED_RECORDS_STATE_NAME = "queuedRecordsState";
+    private static final String SIDDHI_EXECUTION_PLAN_MAP_STATE = "siddhiExecutionPlanMapState";
 
     private final SiddhiOperatorContext siddhiPlan;
     private final boolean isProcessingTime;
@@ -106,10 +110,16 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
     // queue to buffer out of order stream records
     private transient PriorityQueue<StreamRecord<IN>> priorityQueue;
 
-    private transient ListState<byte[]> siddhiRuntimeState;
+    private transient ListState<Map<String,byte[]>> siddhiRuntimeState;
     private transient ListState<byte[]> queuedRecordsState;
 
     private transient ConcurrentHashMap<String, QueryRuntimeHandler> siddhiRuntimeHandlers;
+
+    //stores the executionPlan map for siddhi rule to create siddhi runtime after failure
+    private transient ListState<Map<String,String>> siddhiExecutionPlanMapState;
+
+    //stores the snapshot of the siddhi runtime for restore after the failure
+    private transient Map<String,byte[]> siddhiRuntimeSnapshot;
 
     private class QueryRuntimeHandler {
         private final SiddhiAppRuntime siddhiRuntime;
@@ -269,6 +279,9 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
         if (siddhiRuntimeHandlers == null) {
             siddhiRuntimeHandlers = new ConcurrentHashMap<>();
         }
+        if (siddhiRuntimeSnapshot == null){
+            siddhiRuntimeSnapshot = new HashMap<>();
+        }
     }
 
     @Override
@@ -307,8 +320,18 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
 
         for (String id: this.siddhiPlan.getExecutionPlanMap().keySet()) {
             QueryRuntimeHandler handler = new QueryRuntimeHandler(this.siddhiPlan.getEnrichedExecutionPlan(id));
-            handler.start();
-            this.siddhiRuntimeHandlers.put(id, handler);
+            if (handler.siddhiRuntime != null) {
+                handler.start();
+                if (siddhiRuntimeSnapshot.containsKey(id)) {
+                    try {
+                        handler.siddhiRuntime.restore(siddhiRuntimeSnapshot.get(id));
+                        LOGGER.info("siddhiRuntime for id = {} restored successfully...", id);
+                    } catch (CannotRestoreSiddhiAppStateException e) {
+                        LOGGER.warn("unable to restore siddhi state: ", e);
+                    }
+                }
+                this.siddhiRuntimeHandlers.put(id, handler);
+            }
         }
     }
 
@@ -324,21 +347,28 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
     @Override
     public void dispose() throws Exception {
         this.siddhiRuntimeState.clear();
+        this.siddhiExecutionPlanMapState.clear();
         super.dispose();
     }
 
     @Override
     public void snapshotState(StateSnapshotContext context) throws Exception {
         super.snapshotState(context);
+        checkpointSiddhiExecutionPlanMapState();
         checkpointSiddhiRuntimeState();
         checkpointRecordQueueState();
     }
 
     private void restoreState() throws Exception {
         LOGGER.info("Restore siddhi state");
-        final Iterator<byte[]> siddhiState = siddhiRuntimeState.get().iterator();
+        final Iterator<Map<String,byte[]>> siddhiState = siddhiRuntimeState.get().iterator();
+
+        for(Map.Entry<String,String> plan : siddhiExecutionPlanMapState.get().iterator().next().entrySet()){
+            siddhiPlan.addExecutionPlan(plan.getKey(),plan.getValue());
+        }
+
         if (siddhiState.hasNext()) {
-            // TODO this.siddhiRuntime.restore(siddhiState.next());
+            siddhiRuntimeSnapshot.putAll(siddhiState.next());
         }
 
         LOGGER.info("Restore queued records state");
@@ -360,12 +390,23 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
         super.initializeState(context);
         if (siddhiRuntimeState == null) {
             siddhiRuntimeState = context.getOperatorStateStore().getUnionListState(new ListStateDescriptor<>(SIDDHI_RUNTIME_STATE_NAME,
-                    new BytePrimitiveArraySerializer()));
+                    TypeInformation.of(new TypeHint<Map<String,byte[]>>() {
+                    })));
         }
+
         if (queuedRecordsState == null) {
             queuedRecordsState = context.getOperatorStateStore().getListState(
-                new ListStateDescriptor<>(QUEUED_RECORDS_STATE_NAME, new BytePrimitiveArraySerializer()));
+                    new ListStateDescriptor<>(QUEUED_RECORDS_STATE_NAME, new BytePrimitiveArraySerializer()));
         }
+
+        if (siddhiExecutionPlanMapState == null) {
+            siddhiExecutionPlanMapState = context.getOperatorStateStore().getUnionListState(
+                    new ListStateDescriptor<Map<String, String>>(SIDDHI_EXECUTION_PLAN_MAP_STATE,
+                            TypeInformation.of(new TypeHint<Map<String, String>>() {
+                            }))
+            );
+        }
+
         if (context.isRestored()) {
             restoreState();
         }
@@ -374,9 +415,17 @@ public abstract class AbstractSiddhiOperator<IN, OUT> extends AbstractStreamOper
     private void checkpointSiddhiRuntimeState() throws Exception {
         this.siddhiRuntimeState.clear();
         for (Map.Entry<String, QueryRuntimeHandler> entry : this.siddhiRuntimeHandlers.entrySet()) {
-            this.siddhiRuntimeState.add(entry.getValue().siddhiRuntime.snapshot());
+            if(entry.getValue().siddhiRuntime != null)
+                siddhiRuntimeSnapshot.put(entry.getKey(),entry.getValue().siddhiRuntime.snapshot());
         }
+        siddhiRuntimeState.add(siddhiRuntimeSnapshot);
+        siddhiRuntimeSnapshot.clear();
         this.queuedRecordsState.clear();
+    }
+
+    private void checkpointSiddhiExecutionPlanMapState () throws Exception {
+        this.siddhiExecutionPlanMapState.clear();
+        siddhiExecutionPlanMapState.add(siddhiPlan.getExecutionPlanMap());
     }
 
     private void checkpointRecordQueueState() throws Exception {

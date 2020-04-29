@@ -63,6 +63,9 @@ public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute,
 
     private static final String ADD_ROUTE_OPERATOR_STATE = "add_route_operator_state";
 
+    private Map<String,Object> stateMap = new HashMap<>();
+
+
     public AddRouteOperator(Map<String, SiddhiStreamSchema<?>> dataStreamSchemas) {
         this.dataStreamSchemas = new HashMap<>(dataStreamSchemas);
     }
@@ -80,18 +83,18 @@ public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute,
         super.snapshotState(context);
         addRouteState.clear();
 
-        Map<String,Object> stateMap = new HashMap<>();
         stateMap.put("inputStreamToExecutionPlans",inputStreamToExecutionPlans);
         stateMap.put("executionPlanIdToPartitionKeys",executionPlanIdToPartitionKeys);
         stateMap.put("executionPlanEnabled",executionPlanEnabled);
 
+        stateMap.clear();
         addRouteState.add(stateMap);
 
     }
 
     public void restoreState() throws Exception{
 
-        Map<String,Object> stateMap = addRouteState.get().iterator().next();
+        stateMap = addRouteState.get().iterator().next();
         inputStreamToExecutionPlans = (HashMap<String,Set<String>>)stateMap.get("inputStreamToExecutionPlans");
         executionPlanIdToPartitionKeys = (HashMap<String,List<String>>)stateMap.get("executionPlanIdToPartitionKeys");
         executionPlanEnabled = (HashMap<String,Boolean>)stateMap.get("executionPlanEnabled");
