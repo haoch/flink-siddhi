@@ -59,7 +59,7 @@ public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute,
 
     private Map<String, SiddhiStreamSchema<?>> dataStreamSchemas;
 
-    private transient ListState<Tuple2<String,Object>> addRouteState;
+    private transient ListState<Map<String,Object>> addRouteState;
 
     private static final String ADD_ROUTE_OPERATOR_STATE = "add_route_operator_state";
 
@@ -80,37 +80,31 @@ public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute,
         super.snapshotState(context);
         addRouteState.clear();
 
-        addRouteState.add(Tuple2.of("inputStreamToExecutionPlans",inputStreamToExecutionPlans));
-        addRouteState.add(Tuple2.of("executionPlanIdToPartitionKeys",executionPlanIdToPartitionKeys));
-        addRouteState.add(Tuple2.of("executionPlanEnabled",executionPlanEnabled));
+        Map<String,Object> stateMap = new HashMap<>();
+        stateMap.put("inputStreamToExecutionPlans",inputStreamToExecutionPlans);
+        stateMap.put("executionPlanIdToPartitionKeys",executionPlanIdToPartitionKeys);
+        stateMap.put("executionPlanEnabled",executionPlanEnabled);
+
+        addRouteState.add(stateMap);
 
     }
 
     public void restoreState() throws Exception{
-        for(Tuple2<String,Object> element : addRouteState.get()){
-            switch(element.f0){
-                case "inputStreamToExecutionPlans":
-                    inputStreamToExecutionPlans = (HashMap<String,Set<String>>)element.f1;
-                    break;
-                case "executionPlanIdToPartitionKeys":
-                    executionPlanIdToPartitionKeys = (HashMap<String,List<String>>)element.f1;
-                    break;
-                case "executionPlanEnabled":
-                    executionPlanEnabled = (HashMap<String,Boolean>)element.f1;
-                    break;
-                default:
-                    LOGGER.warn("No valid state tuple");
-            }
-        }
+
+        Map<String,Object> stateMap = addRouteState.get().iterator().next();
+        inputStreamToExecutionPlans = (HashMap<String,Set<String>>)stateMap.get("inputStreamToExecutionPlans");
+        executionPlanIdToPartitionKeys = (HashMap<String,List<String>>)stateMap.get("executionPlanIdToPartitionKeys");
+        executionPlanEnabled = (HashMap<String,Boolean>)stateMap.get("executionPlanEnabled");
+
         LOGGER.info("AddRouteOperator states restored successfully.....");
     }
 
     @Override
     public void initializeState(StateInitializationContext context) throws Exception {
         super.initializeState(context);
-        ListStateDescriptor<Tuple2<String, Object>> descriptor =
+        ListStateDescriptor<Map<String, Object>> descriptor =
                 new ListStateDescriptor<>(ADD_ROUTE_OPERATOR_STATE,
-                        TypeInformation.of(new TypeHint<Tuple2<String, Object>>() {}));
+                        TypeInformation.of(new TypeHint<Map<String, Object>>() {}));
 
         if(addRouteState == null){
             addRouteState = context.getOperatorStateStore().getUnionListState(descriptor);
