@@ -124,19 +124,30 @@ public abstract class SiddhiStream {
          * @return ExecutionSiddhiStream context
          */
         public ExecutionSiddhiStream cql(DataStream<ControlEvent> controlStream) {
-            DataStream<Tuple2<StreamRoute, Object>> unionStream = controlStream
-                .map(new NamedControlStream(ControlEvent.DEFAULT_INTERNAL_CONTROL_STREAM))
-                .broadcast()
-                .union(this.toDataStream())
+
+            // first of all we gather control events to the broadcasted stream
+            DataStream<Tuple2<StreamRoute, Object>> broadcastedControlStream = controlStream
+                    .map(new NamedControlStream(ControlEvent.DEFAULT_INTERNAL_CONTROL_STREAM))
+                    .broadcast();
+
+            // Control events are cut off on the AddRouteOperator stage
+            DataStream<Tuple2<StreamRoute, Object>> dataWithControlStream = this.toDataStream()
+                .union(broadcastedControlStream)
                 .transform("add route transform",
                     SiddhiTypeFactory.getStreamTupleTypeInformation(TypeInformation.of(Object.class)),
                     new AddRouteOperator(getCepEnvironment().getDataStreamSchemas()));
 
+            // create partitioned stream based only on data events
             DataStream<Tuple2<StreamRoute, Object>> partitionedStream = new DataStream<>(
-                unionStream.getExecutionEnvironment(),
-                new PartitionTransformation<>(unionStream.getTransformation(),
+                dataWithControlStream.getExecutionEnvironment(),
+                new PartitionTransformation<>(dataWithControlStream.getTransformation(),
                 new DynamicPartitioner()));
-            return new ExecutionSiddhiStream(partitionedStream, null, getCepEnvironment());
+
+            // union partitioned data stream with broadcasted control stream
+            DataStream<Tuple2<StreamRoute, Object>> unionStream = partitionedStream
+                    .union(broadcastedControlStream);
+
+            return new ExecutionSiddhiStream(unionStream, null, getCepEnvironment());
         }
 
         private static class NamedControlStream

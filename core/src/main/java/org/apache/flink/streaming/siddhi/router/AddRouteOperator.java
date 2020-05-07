@@ -61,8 +61,6 @@ public class AddRouteOperator extends AbstractStreamOperator<Tuple2<StreamRoute,
             } else if (value instanceof MetadataControlEvent) {
                 handleMetadataControlEvent((MetadataControlEvent)value);
             }
-
-            output.collect(element);
         } else {
             String inputStreamId = streamRoute.getInputStreamId();
             if (!inputStreamToExecutionPlans.containsKey(inputStreamId)) {
